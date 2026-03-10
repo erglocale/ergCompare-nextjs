@@ -1,0 +1,43 @@
+.dashboardWrapper {
+  display: flex;
+  min-height: 100vh;
+}
+
+.main {
+  flex: 1;
+  margin-left: var(--sidebar-width);
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-light);
+  padding: 24px 32px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.headerContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.greeting {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--heading);
+  margin-bottom: 2px;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: var(--text-light);
+}
+
+.content {
+  padding: 32px;
+  flex: 1;
+}

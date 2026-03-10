@@ -1,0 +1,441 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  max-width: 900px;
+  animation: fadeIn 0.3s ease;
+}
+
+.header {
+  margin-bottom: 4px;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--heading);
+  margin-bottom: 4px;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: var(--text-light);
+}
+
+/* Stepper */
+.stepper {
+  display: flex;
+  gap: 8px;
+}
+
+.stepItem {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-light);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.stepItem:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.stepActive {
+  border-color: var(--primary);
+  background: var(--primary-glow);
+  color: var(--primary);
+}
+
+.stepDone {
+  border-color: var(--success);
+  color: var(--success);
+}
+
+.stepIcon {
+  font-size: 18px;
+}
+
+.stepLabel {
+  white-space: nowrap;
+}
+
+/* Form Card */
+.formCard {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-sm);
+  padding: 32px;
+  animation: fadeInUp 0.4s ease both;
+}
+
+/* Comparison Name */
+.nameFieldWrap {
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.nameLabel {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--heading);
+  margin-bottom: 8px;
+  display: block;
+}
+
+.nameInput {
+  width: 100%;
+  padding: 14px 18px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--heading);
+  background: var(--bg);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  font-family: inherit;
+}
+
+.nameInput::placeholder {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.nameInput:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+.nameHint {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+/* Section */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.sectionTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--heading);
+  margin-bottom: 0;
+}
+
+.sectionTitleRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.sectionDesc {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: -8px;
+}
+
+/* Form Grid */
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.input,
+.select {
+  padding: 10px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  color: var(--text);
+  background: var(--bg);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  font-family: inherit;
+}
+
+.input:focus,
+.select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+.select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23718096' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+
+/* Vehicle / Charger Cards */
+.vehicleCard {
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  background: var(--bg);
+}
+
+.vehicleHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.vehicleBadge {
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--primary);
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+}
+
+.chargerBadge {
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--chart-green);
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+}
+
+.removeBtn {
+  font-size: 12px;
+  color: var(--danger);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.removeBtn:hover {
+  text-decoration: underline;
+}
+
+.browseBtn {
+  font-size: 12px;
+  color: var(--primary);
+  background: rgba(249, 116, 23, 0.1);
+  border: 1px solid var(--primary);
+  border-radius: var(--radius-sm);
+  padding: 5px 12px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s, transform 0.15s;
+}
+.browseBtn:hover {
+  background: rgba(249, 116, 23, 0.2);
+  transform: translateY(-1px);
+}
+
+.addBtn {
+  padding: 12px;
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--primary);
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  width: 100%;
+  font-family: inherit;
+}
+
+.addBtn:hover {
+  border-color: var(--primary);
+  background: var(--primary-glow);
+}
+
+/* ICE Toggle Card */
+.iceToggleCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 24px 28px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  user-select: none;
+}
+
+.iceToggleCard:hover {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+.iceToggleActive {
+  border-color: var(--primary);
+  background: linear-gradient(135deg, var(--primary-glow) 0%, var(--bg-card) 100%);
+}
+
+.iceToggleLeft {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.iceToggleIcon {
+  font-size: 32px;
+  flex-shrink: 0;
+}
+
+.iceToggleTitle {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--heading);
+  margin-bottom: 4px;
+}
+
+.iceToggleDesc {
+  font-size: 13px;
+  color: var(--text-light);
+  line-height: 1.5;
+  max-width: 480px;
+}
+
+/* Custom Toggle Switch */
+.iceToggleSwitch {
+  flex-shrink: 0;
+}
+
+.switchTrack {
+  width: 52px;
+  height: 28px;
+  border-radius: 14px;
+  background: var(--border);
+  position: relative;
+  transition: background var(--transition-fast);
+}
+
+.switchOn {
+  background: var(--primary);
+}
+
+.switchThumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  transition: transform var(--transition-fast);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.switchOn .switchThumb {
+  transform: translateX(24px);
+}
+
+/* Skip Notice */
+.iceSkipNotice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 16px 20px;
+  background: #f0f4ff;
+  border: 1px solid #dce3f0;
+  border-radius: var(--radius-md);
+  animation: fadeInUp 0.3s ease both;
+}
+
+.iceSkipIcon {
+  font-size: 18px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.iceSkipNotice p {
+  font-size: 13px;
+  color: var(--text-light);
+  line-height: 1.5;
+}
+
+/* ICE Form Heading */
+.iceFormHeading {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--heading);
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+/* Nav */
+.navRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.errorBanner {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: var(--danger-bg);
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.navSpacer {
+  flex: 1;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .stepper {
+    flex-wrap: wrap;
+  }
+
+  .stepItem {
+    flex: unset;
+  }
+
+  .iceToggleCard {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .iceToggleLeft {
+    flex-direction: column;
+  }
+}

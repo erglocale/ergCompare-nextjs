@@ -1,0 +1,20 @@
+.chartCard {
+  padding: 24px;
+}
+
+.chartTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--heading);
+  margin-bottom: 2px;
+}
+
+.chartSubtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+}
+
+.chartWrap {
+  width: 100%;
+}

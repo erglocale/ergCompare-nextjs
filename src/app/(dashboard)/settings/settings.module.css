@@ -1,0 +1,307 @@
+.page {
+  padding: 40px;
+  max-width: 800px;
+  margin: 0 auto;
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.settingsCard {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  padding: 32px;
+  gap: 20px;
+}
+
+.avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: var(--primary);
+  color: white;
+  font-size: 32px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.headerInfo {
+  flex: 1;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--heading);
+  margin-bottom: 4px;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: var(--text-light);
+}
+
+.divider {
+  height: 1px;
+  background-color: var(--border-light);
+  width: 100%;
+}
+
+/* Section */
+.section {
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.fieldRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 40px;
+}
+
+.fieldInfo {
+  flex: 1;
+  max-width: 250px;
+}
+
+.fieldTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--heading);
+  margin-bottom: 4px;
+}
+
+.fieldDesc {
+  font-size: 13px;
+  color: var(--text-light);
+  line-height: 1.4;
+}
+
+.fieldControl {
+  flex: 2;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.input {
+  flex: 1;
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 15px;
+  color: var(--heading);
+  background: var(--bg);
+  transition: all var(--transition-fast);
+}
+
+.input:disabled {
+  background: var(--bg-hover);
+  color: var(--text-light);
+  cursor: not-allowed;
+  border-color: var(--border-light);
+}
+
+.input:focus:not(:disabled) {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+/* Metadata */
+.metaRow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.metaLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--heading);
+}
+
+.metaValue {
+  font-size: 14px;
+  color: var(--text-light);
+}
+
+/* Danger Zone */
+.dangerZone {
+  padding: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  background: #fff8f8;
+}
+
+.dangerInfo {
+  flex: 1;
+}
+
+.dangerTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--danger);
+  margin-bottom: 6px;
+}
+
+.dangerDesc {
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.5;
+  max-width: 500px;
+}
+
+@media (max-width: 640px) {
+  .header {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .fieldRow {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .fieldInfo {
+    max-width: 100%;
+  }
+
+  .fieldControl {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dangerZone {
+    flex-direction: column;
+    text-align: center;
+    align-items: stretch;
+  }
+}
+
+/* Change Password */
+.passwordForm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.passwordField {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.passwordField .input {
+  padding-right: 60px;
+}
+
+.toggleBtn {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-light);
+  padding: 4px 6px;
+  transition: color 0.15s;
+}
+
+.toggleBtn:hover {
+  color: var(--heading);
+}
+
+.changePasswordBtn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--primary);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+  align-self: flex-start;
+}
+
+.changePasswordBtn:hover:not(:disabled) {
+  background: var(--primary-dark);
+}
+
+.changePasswordBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.formActions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.cancelBtn {
+  padding: 10px 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-light);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.cancelBtn:hover {
+  background: var(--bg-hover);
+  color: var(--heading);
+}
+
+.successMsg {
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  background: #edfbee;
+  color: #1a7a2e;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.errorMsg {
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  background: var(--danger-bg, #fff0f0);
+  color: var(--danger, #d32f2f);
+  font-size: 13px;
+  font-weight: 600;
+}
