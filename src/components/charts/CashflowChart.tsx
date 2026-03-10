@@ -44,12 +44,16 @@ export default function CashflowChart({ data, currency = "USD" }: CashflowChartP
               }
             />
             <Tooltip
-              formatter={(value: number, name: string) => {
+              formatter={(value, name) => {
                 const labels: Record<string, string> = {
                   annualCost: "Annual Cost/Savings",
                   cumulativeSavings: "Cumulative Savings",
                 };
-                return [formatCurrency(value, currency), labels[name] || name];
+                const seriesName = typeof name === "string" ? name : "Value";
+                if (typeof value !== "number") {
+                  return ["N/A", labels[seriesName] || seriesName];
+                }
+                return [formatCurrency(value, currency), labels[seriesName] || seriesName];
               }}
               labelFormatter={(label) => `Year ${label}`}
               contentStyle={{

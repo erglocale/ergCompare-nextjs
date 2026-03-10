@@ -75,12 +75,14 @@ export default function FinancialReturnChart({
               }}
             />
             <Tooltip
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              formatter={(value: any, name: any) => {
+              formatter={(value, name) => {
                 if (value === undefined) return "N/A";
-                if (name === "NPV") return formatCurrency(value, currency);
-                if (name === "Payback Period")
-                  return value ? `${value} years` : "N/A";
+                if (name === "NPV" && typeof value === "number") {
+                  return formatCurrency(value, currency);
+                }
+                if (name === "Payback Period") {
+                  return typeof value === "number" && value ? `${value} years` : "N/A";
+                }
                 return value;
               }}
               labelFormatter={(label) => `IRR: ${label}%`}

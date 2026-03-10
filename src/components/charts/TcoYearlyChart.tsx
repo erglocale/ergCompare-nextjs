@@ -50,7 +50,9 @@ export default function TcoYearlyChart({ data, currency = "USD" }: TcoYearlyChar
               tickFormatter={(v) => `${(v / 1_000_000).toFixed(1)}M`}
             />
             <Tooltip
-              formatter={(value: number) => formatCurrency(value, currency)}
+              formatter={(value) =>
+                typeof value === "number" ? formatCurrency(value, currency) : "N/A"
+              }
               labelFormatter={(label) => `Year ${label}`}
               contentStyle={{
                 borderRadius: "8px",

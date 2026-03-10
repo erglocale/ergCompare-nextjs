@@ -48,7 +48,9 @@ export default function TcoComparisonChart({
               tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
             />
             <Tooltip
-              formatter={(value: number) => formatCurrency(value, currency)}
+              formatter={(value) =>
+                typeof value === "number" ? formatCurrency(value, currency) : "N/A"
+              }
               contentStyle={{
                 borderRadius: "8px",
                 border: "1px solid var(--border)",

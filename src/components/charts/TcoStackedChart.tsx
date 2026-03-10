@@ -20,9 +20,17 @@ interface TcoStackedChartProps {
 
 const COLORS = ["#1f77b4", "#22c55e", "#17becf", "#9467bd"];
 
+function sumSeries(values: Array<number | undefined>) {
+  let total = 0;
+  for (const value of values) {
+    total += value ?? 0;
+  }
+  return total;
+}
+
 export default function TcoStackedChart({ data }: TcoStackedChartProps) {
-  const tcoEvTotal = data.tcoEv.reduce((s, v) => s + v, 0);
-  const tcoIceTotal = data.tcoIce.reduce((s, v) => s + v, 0);
+  const tcoEvTotal = sumSeries([...data.tcoEv]);
+  const tcoIceTotal = sumSeries([...data.tcoIce]);
   const savingsPercent =
     tcoIceTotal !== 0
       ? (100 * (tcoIceTotal - tcoEvTotal)) / tcoIceTotal
@@ -88,15 +96,16 @@ export default function TcoStackedChart({ data }: TcoStackedChartProps) {
               }}
             />
             <Tooltip
-              formatter={(value: number | undefined, name: string) => {
-                if (value === undefined) return "N/A";
+              formatter={(value, name) => {
+                if (typeof value !== "number") return "N/A";
+                const seriesName = typeof name === "string" ? name : "Value";
                 const labelMap: Record<string, string> = {
                   purchasePrice: "CapEx",
                   fuelPrice: "Fuel",
                   maintenanceCost: "Maintenance",
                   residueValue: "Fleet Residue Value",
                 };
-                return [value.toFixed(4), labelMap[name] || name];
+                return [value.toFixed(4), labelMap[seriesName] || seriesName];
               }}
               contentStyle={{
                 borderRadius: "8px",
@@ -105,14 +114,15 @@ export default function TcoStackedChart({ data }: TcoStackedChartProps) {
               }}
             />
             <Legend
-              formatter={(value: string) => {
+              formatter={(value) => {
+                const seriesName = typeof value === "string" ? value : "Value";
                 const labelMap: Record<string, string> = {
                   purchasePrice: "CapEx",
                   fuelPrice: "Fuel",
                   maintenanceCost: "Maintenance",
                   residueValue: "Fleet Residue Value",
                 };
-                return labelMap[value] || value;
+                return labelMap[seriesName] || seriesName;
               }}
               iconType="rect"
               iconSize={18}

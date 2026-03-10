@@ -33,9 +33,6 @@ importers:
         specifier: ^5.0.11
         version: 5.0.11(@types/react@19.2.14)(immer@11.1.4)(react@19.2.3)(use-sync-external-store@1.6.0(react@19.2.3))
     devDependencies:
-      '@types/mapbox-gl':
-        specifier: ^3.4.1
-        version: 3.5.0
       '@types/node':
         specifier: ^20
         version: 20.19.37
