@@ -5,12 +5,18 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ComparisonFormPayload, DashboardComparison } from "@/lib/comparisons";
 import type { EvCatalogItem } from "@/lib/mock-data";
 
-export function useEvCatalogQuery(search?: string) {
+export function useEvCatalogQuery(
+  search?: string,
+  latitude?: number,
+  longitude?: number
+) {
   return useQuery({
-    queryKey: ["ev-catalog", search ?? ""],
+    queryKey: ["ev-catalog", search ?? "", latitude ?? null, longitude ?? null],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (search) params.set("search", search);
+      if (typeof latitude === "number") params.set("latitude", String(latitude));
+      if (typeof longitude === "number") params.set("longitude", String(longitude));
       const qs = params.toString();
       const url = qs ? `/api/ev-catalog?${qs}` : "/api/ev-catalog";
       const response = await fetch(url, { cache: "no-store" });

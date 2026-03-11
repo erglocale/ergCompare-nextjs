@@ -123,7 +123,6 @@ const defaultIce: IceConfig = {
 export default function NewComparisonSetup() {
   const router = useRouter();
   const createComparison = useCreateComparisonMutation();
-  const { data: evCatalog = [], isLoading: catalogLoading } = useEvCatalogQuery();
   const [step, setStep] = useState(0);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [comparisonName, setComparisonName] = useState("");
@@ -131,6 +130,11 @@ export default function NewComparisonSetup() {
     latitude: 12.9716, // Default Bengaluru
     longitude: 77.5946,
   });
+  const { data: evCatalog = [], isLoading: catalogLoading } = useEvCatalogQuery(
+    undefined,
+    mapCoords.latitude,
+    mapCoords.longitude
+  );
   const [locationName, setLocationName] = useState(PRESET_CITIES[0].name);
   const [includeIce, setIncludeIce] = useState(true);
   const [contractYears, setContractYears] = useState(8);
