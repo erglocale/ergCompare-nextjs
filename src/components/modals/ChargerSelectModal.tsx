@@ -8,6 +8,8 @@ import {
 } from "@/lib/mock-data";
 import styles from "./CatalogModal.module.css";
 
+const MAX_SEARCH_LENGTH = 80;
+
 interface ChargerSelectModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -53,8 +55,9 @@ export default function ChargerSelectModal({
             className={styles.searchInput}
             placeholder="Search chargers, e.g. ergLocale, ABB, DC..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => setSearch(e.target.value.slice(0, MAX_SEARCH_LENGTH))}
             autoFocus
+            maxLength={MAX_SEARCH_LENGTH}
           />
         </div>
 

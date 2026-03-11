@@ -5,6 +5,9 @@ import { FormEvent, useState } from "react";
 
 import styles from "./page.module.css";
 
+const MAX_EMAIL_LENGTH = 254;
+const MAX_PASSWORD_LENGTH = 128;
+
 function EyeIcon({ open }: { open: boolean }) {
   if (open) {
     return (
@@ -34,13 +37,31 @@ export default function LoginPage() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (!normalizedEmail) {
+      setError("Email is required.");
+      return;
+    }
+
+    if (normalizedEmail.length > MAX_EMAIL_LENGTH) {
+      setError("Email is too long.");
+      return;
+    }
+
+    if (!password || password.length > MAX_PASSWORD_LENGTH) {
+      setError(`Password must be between 1 and ${MAX_PASSWORD_LENGTH} characters.`);
+      return;
+    }
+
     setLoading(true);
 
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: normalizedEmail, password }),
       });
 
       const data = await res.json();
@@ -77,10 +98,12 @@ export default function LoginPage() {
               type="email"
               className={styles.input}
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => setEmail(e.target.value.slice(0, MAX_EMAIL_LENGTH))}
               placeholder="you@company.com"
               required
               autoComplete="email"
+              inputMode="email"
+              maxLength={MAX_EMAIL_LENGTH}
             />
           </label>
 
@@ -91,10 +114,11 @@ export default function LoginPage() {
                 type={showPassword ? "text" : "password"}
                 className={styles.input}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => setPassword(e.target.value.slice(0, MAX_PASSWORD_LENGTH))}
                 placeholder="••••••••"
                 required
                 autoComplete="current-password"
+                maxLength={MAX_PASSWORD_LENGTH}
               />
               <button
                 type="button"

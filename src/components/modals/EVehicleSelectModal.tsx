@@ -4,6 +4,8 @@ import { useState, useMemo } from "react";
 import { formatNumber, type EvCatalogItem } from "@/lib/mock-data";
 import styles from "./CatalogModal.module.css";
 
+const MAX_SEARCH_LENGTH = 80;
+
 interface EVehicleSelectModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -49,8 +51,9 @@ export default function EVehicleSelectModal({
             className={styles.searchInput}
             placeholder="Search vehicles, e.g. Tata, MG, Hyundai..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => setSearch(e.target.value.slice(0, MAX_SEARCH_LENGTH))}
             autoFocus
+            maxLength={MAX_SEARCH_LENGTH}
           />
         </div>
 

@@ -3,6 +3,9 @@
 import { FormEvent, useState } from "react";
 import styles from "./settings.module.css";
 
+const MIN_PASSWORD_LENGTH = 6;
+const MAX_PASSWORD_LENGTH = 128;
+
 export default function ChangePasswordForm() {
   const [isOpen, setIsOpen] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
@@ -17,8 +20,18 @@ export default function ChangePasswordForm() {
     e.preventDefault();
     setMessage(null);
 
-    if (newPassword.length < 6) {
+    if (currentPassword.length > MAX_PASSWORD_LENGTH) {
+      setMessage({ type: "error", text: `Current password must be at most ${MAX_PASSWORD_LENGTH} characters.` });
+      return;
+    }
+
+    if (newPassword.length < MIN_PASSWORD_LENGTH) {
       setMessage({ type: "error", text: "New password must be at least 6 characters." });
+      return;
+    }
+
+    if (newPassword.length > MAX_PASSWORD_LENGTH) {
+      setMessage({ type: "error", text: `New password must be at most ${MAX_PASSWORD_LENGTH} characters.` });
       return;
     }
 
@@ -88,9 +101,10 @@ export default function ChangePasswordForm() {
                 type={showCurrent ? "text" : "password"}
                 placeholder="Current password"
                 value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
+                onChange={(e) => setCurrentPassword(e.target.value.slice(0, MAX_PASSWORD_LENGTH))}
                 required
                 autoComplete="current-password"
+                maxLength={MAX_PASSWORD_LENGTH}
               />
               <button
                 type="button"
@@ -108,9 +122,10 @@ export default function ChangePasswordForm() {
                 type={showNew ? "text" : "password"}
                 placeholder="New password (min 6 chars)"
                 value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
+                onChange={(e) => setNewPassword(e.target.value.slice(0, MAX_PASSWORD_LENGTH))}
                 required
-                minLength={6}
+                minLength={MIN_PASSWORD_LENGTH}
+                maxLength={MAX_PASSWORD_LENGTH}
                 autoComplete="new-password"
               />
               <button
@@ -128,9 +143,10 @@ export default function ChangePasswordForm() {
               type="password"
               placeholder="Confirm new password"
               value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
+              onChange={(e) => setConfirmPassword(e.target.value.slice(0, MAX_PASSWORD_LENGTH))}
               required
-              minLength={6}
+              minLength={MIN_PASSWORD_LENGTH}
+              maxLength={MAX_PASSWORD_LENGTH}
               autoComplete="new-password"
             />
             <div className={styles.formActions}>

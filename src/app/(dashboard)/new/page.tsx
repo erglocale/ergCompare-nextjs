@@ -8,6 +8,41 @@ import { useCreateComparisonMutation, useEvCatalogQuery } from "@/lib/query-hook
 import type { EvCatalogItem } from "@/lib/mock-data";
 import styles from "./setup.module.css";
 
+const MAX_COMPARISON_NAME_LENGTH = 120;
+const MAX_LOCATION_NAME_LENGTH = 160;
+const MAX_VEHICLE_NAME_LENGTH = 120;
+const MIN_CONTRACT_YEARS = 1;
+const MAX_CONTRACT_YEARS = 20;
+const MIN_ANNUAL_DRIVE = 1;
+const MAX_ANNUAL_DRIVE = 1000000;
+const MIN_VEHICLE_COUNT = 1;
+const MAX_VEHICLE_COUNT = 10000;
+const MAX_PRICE = 1000000000;
+const MAX_BATTERY_CAPACITY = 5000;
+const MAX_RANGE_KM = 5000;
+const MAX_PERCENT = 100;
+const MAX_MILEAGE = 200;
+
+function clampNumber(value: number, min: number, max: number) {
+  if (!Number.isFinite(value)) {
+    return min;
+  }
+
+  return Math.min(max, Math.max(min, value));
+}
+
+function limitText(value: string, maxLength: number) {
+  return value.slice(0, maxLength);
+}
+
+function parseClampedNumber(value: string, min: number, max: number) {
+  if (value.trim() === "") {
+    return min;
+  }
+
+  return clampNumber(Number(value), min, max);
+}
+
 interface VehicleConfig {
   [key: string]: string | number | undefined;
   modelId?: number;
@@ -138,7 +173,7 @@ export default function NewComparisonSetup() {
 
   const selectPresetCity = (city: typeof PRESET_CITIES[0]) => {
     setMapCoords({ latitude: city.lat, longitude: city.lng });
-    setLocationName(city.name);
+    setLocationName(limitText(city.name, MAX_LOCATION_NAME_LENGTH));
     setCurrency(city.currency);
     setLocation({
       ...location,
@@ -158,7 +193,7 @@ export default function NewComparisonSetup() {
       );
       const data = await res.json();
       if (data.features?.length > 0) {
-        setLocationName(data.features[0].place_name);
+        setLocationName(limitText(data.features[0].place_name, MAX_LOCATION_NAME_LENGTH));
       } else {
         setLocationName("Custom location");
       }
@@ -194,17 +229,64 @@ export default function NewComparisonSetup() {
     try {
       setSubmitError(null);
 
+      const normalizedComparisonName = comparisonName.trim();
+
+      if (normalizedComparisonName.length > MAX_COMPARISON_NAME_LENGTH) {
+        setSubmitError(`Comparison name must be at most ${MAX_COMPARISON_NAME_LENGTH} characters.`);
+        return;
+      }
+
+      if (locationName.length > MAX_LOCATION_NAME_LENGTH) {
+        setSubmitError("Location name is too long.");
+        return;
+      }
+
+      if (!evVehicles.length) {
+        setSubmitError("At least one EV vehicle is required.");
+        return;
+      }
+
+      const safeEvVehicles = evVehicles.map((ev) => ({
+        ...ev,
+        name: limitText(ev.name.trim(), MAX_VEHICLE_NAME_LENGTH),
+        count: clampNumber(ev.count, MIN_VEHICLE_COUNT, MAX_VEHICLE_COUNT),
+        price: clampNumber(ev.price, 0, MAX_PRICE),
+        batteryCapacity: clampNumber(ev.batteryCapacity, 0, MAX_BATTERY_CAPACITY),
+        range: clampNumber(ev.range, 0, MAX_RANGE_KM),
+        chargeCyclesPerDay: clampNumber(ev.chargeCyclesPerDay, 1, 3),
+        maintenanceCost: clampNumber(ev.maintenanceCost, 0, MAX_PRICE),
+        resalePercent: clampNumber(ev.resalePercent, 0, MAX_PERCENT),
+      }));
+
+      const safeIceConfig = {
+        ...iceConfig,
+        name: limitText(iceConfig.name.trim(), MAX_VEHICLE_NAME_LENGTH),
+        cost: clampNumber(iceConfig.cost, 0, MAX_PRICE),
+        mileage: clampNumber(iceConfig.mileage, 1, MAX_MILEAGE),
+        maintenancePercent: clampNumber(iceConfig.maintenancePercent, 0, MAX_PERCENT),
+        depreciationPercent: clampNumber(iceConfig.depreciationPercent, 0, MAX_PERCENT),
+      };
+
+      const safeLocation = {
+        ...location,
+        electricityPrice: clampNumber(location.electricityPrice, 0, 10000),
+        fuelCostPetrol: clampNumber(location.fuelCostPetrol, 0, 10000),
+        fuelCostDiesel: clampNumber(location.fuelCostDiesel, 0, 10000),
+        discountRate: clampNumber(location.discountRate, 0, MAX_PERCENT),
+        fixedMonthlyElectricity: clampNumber(location.fixedMonthlyElectricity, 0, MAX_PRICE),
+      };
+
       const data = await createComparison.mutateAsync({
-          comparisonName,
+          comparisonName: normalizedComparisonName,
           mapCoords,
-          locationName,
+          locationName: limitText(locationName, MAX_LOCATION_NAME_LENGTH),
           includeIce,
-          contractYears,
-          annualDrive,
+          contractYears: clampNumber(contractYears, MIN_CONTRACT_YEARS, MAX_CONTRACT_YEARS),
+          annualDrive: clampNumber(annualDrive, MIN_ANNUAL_DRIVE, MAX_ANNUAL_DRIVE),
           currency,
-          evVehicles,
-          iceConfig,
-          location,
+          evVehicles: safeEvVehicles,
+          iceConfig: safeIceConfig,
+          location: safeLocation,
       });
       router.push(`/compare/${data.report.id}`);
     } catch (error) {
@@ -246,8 +328,9 @@ export default function NewComparisonSetup() {
               <input
                 className={styles.nameInput}
                 value={comparisonName}
-                onChange={(e) => setComparisonName(e.target.value)}
+                onChange={(e) => setComparisonName(limitText(e.target.value, MAX_COMPARISON_NAME_LENGTH))}
                 placeholder="e.g. Downtown Delivery Fleet, Airport Shuttle..."
+                maxLength={MAX_COMPARISON_NAME_LENGTH}
               />
               <p className={styles.nameHint}>
                 Give your comparison a memorable name to find it easily later
@@ -303,9 +386,9 @@ export default function NewComparisonSetup() {
                   type="number"
                   className={styles.input}
                   value={contractYears}
-                  onChange={(e) => setContractYears(Number(e.target.value))}
-                  min={1}
-                  max={20}
+                  onChange={(e) => setContractYears(parseClampedNumber(e.target.value, MIN_CONTRACT_YEARS, MAX_CONTRACT_YEARS))}
+                  min={MIN_CONTRACT_YEARS}
+                  max={MAX_CONTRACT_YEARS}
                 />
               </div>
               <div className={styles.field}>
@@ -314,7 +397,9 @@ export default function NewComparisonSetup() {
                   type="number"
                   className={styles.input}
                   value={annualDrive}
-                  onChange={(e) => setAnnualDrive(Number(e.target.value))}
+                  onChange={(e) => setAnnualDrive(parseClampedNumber(e.target.value, MIN_ANNUAL_DRIVE, MAX_ANNUAL_DRIVE))}
+                  min={MIN_ANNUAL_DRIVE}
+                  max={MAX_ANNUAL_DRIVE}
                 />
               </div>
             </div>
@@ -372,9 +457,10 @@ export default function NewComparisonSetup() {
                       className={styles.input}
                       value={ev.count}
                       onChange={(e) =>
-                        updateEv(idx, "count", Number(e.target.value))
+                        updateEv(idx, "count", parseClampedNumber(e.target.value, MIN_VEHICLE_COUNT, MAX_VEHICLE_COUNT))
                       }
-                      min={1}
+                      min={MIN_VEHICLE_COUNT}
+                      max={MAX_VEHICLE_COUNT}
                     />
                   </div>
                 </div>
@@ -393,15 +479,15 @@ export default function NewComparisonSetup() {
                   <div className={styles.formGrid} style={{ marginTop: "16px" }}>
                     <div className={styles.field}>
                       <label className={styles.label}>Price ({currency})</label>
-                      <input type="number" className={styles.input} value={ev.price} onChange={e => updateEv(idx, "price", Number(e.target.value))} />
+                      <input type="number" className={styles.input} value={ev.price} onChange={e => updateEv(idx, "price", parseClampedNumber(e.target.value, 0, MAX_PRICE))} min={0} max={MAX_PRICE} />
                     </div>
                     <div className={styles.field}>
                       <label className={styles.label}>Battery Capacity (kWh)</label>
-                      <input type="number" className={styles.input} value={ev.batteryCapacity} onChange={e => updateEv(idx, "batteryCapacity", Number(e.target.value))} />
+                      <input type="number" className={styles.input} value={ev.batteryCapacity} onChange={e => updateEv(idx, "batteryCapacity", parseClampedNumber(e.target.value, 0, MAX_BATTERY_CAPACITY))} min={0} max={MAX_BATTERY_CAPACITY} />
                     </div>
                     <div className={styles.field}>
                       <label className={styles.label}>Max Range (km)</label>
-                      <input type="number" className={styles.input} value={ev.range} onChange={e => updateEv(idx, "range", Number(e.target.value))} />
+                      <input type="number" className={styles.input} value={ev.range} onChange={e => updateEv(idx, "range", parseClampedNumber(e.target.value, 0, MAX_RANGE_KM))} min={0} max={MAX_RANGE_KM} />
                     </div>
                     <div className={styles.field}>
                       <label className={styles.label}>Charge Cycles per Day</label>
@@ -489,8 +575,9 @@ export default function NewComparisonSetup() {
                       className={styles.input}
                       value={iceConfig.name}
                       onChange={(e) =>
-                        setIceConfig({ ...iceConfig, name: e.target.value })
+                        setIceConfig({ ...iceConfig, name: limitText(e.target.value, MAX_VEHICLE_NAME_LENGTH) })
                       }
+                      maxLength={MAX_VEHICLE_NAME_LENGTH}
                     />
                   </div>
                   <div className={styles.field}>
@@ -526,19 +613,19 @@ export default function NewComparisonSetup() {
                   <div className={styles.formGrid} style={{ marginTop: "16px" }}>
                     <div className={styles.field}>
                       <label className={styles.label}>Cost per Vehicle ({currency})</label>
-                      <input type="number" className={styles.input} value={iceConfig.cost} onChange={e => setIceConfig({ ...iceConfig, cost: Number(e.target.value) })} />
+                      <input type="number" className={styles.input} value={iceConfig.cost} onChange={e => setIceConfig({ ...iceConfig, cost: parseClampedNumber(e.target.value, 0, MAX_PRICE) })} min={0} max={MAX_PRICE} />
                     </div>
                     <div className={styles.field}>
                       <label className={styles.label}>Mileage (km/L)</label>
-                      <input type="number" className={styles.input} value={iceConfig.mileage} onChange={e => setIceConfig({ ...iceConfig, mileage: Number(e.target.value) })} />
+                      <input type="number" className={styles.input} value={iceConfig.mileage} onChange={e => setIceConfig({ ...iceConfig, mileage: parseClampedNumber(e.target.value, 1, MAX_MILEAGE) })} min={1} max={MAX_MILEAGE} />
                     </div>
                     <div className={styles.field}>
                       <label className={styles.label}>Maintenance (%/year)</label>
-                      <input type="number" className={styles.input} value={iceConfig.maintenancePercent} onChange={e => setIceConfig({ ...iceConfig, maintenancePercent: Number(e.target.value) })} />
+                      <input type="number" className={styles.input} value={iceConfig.maintenancePercent} onChange={e => setIceConfig({ ...iceConfig, maintenancePercent: parseClampedNumber(e.target.value, 0, MAX_PERCENT) })} min={0} max={MAX_PERCENT} />
                     </div>
                     <div className={styles.field}>
                       <label className={styles.label}>Depreciation (%/year)</label>
-                      <input type="number" className={styles.input} value={iceConfig.depreciationPercent} onChange={e => setIceConfig({ ...iceConfig, depreciationPercent: Number(e.target.value) })} />
+                      <input type="number" className={styles.input} value={iceConfig.depreciationPercent} onChange={e => setIceConfig({ ...iceConfig, depreciationPercent: parseClampedNumber(e.target.value, 0, MAX_PERCENT) })} min={0} max={MAX_PERCENT} />
                     </div>
                   </div>
                 )}
