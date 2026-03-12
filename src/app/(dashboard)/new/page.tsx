@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import LocationPickerMap from "@/components/Map/LocationPickerMap";
 import EVehicleSelectModal from "@/components/modals/EVehicleSelectModal";
@@ -141,7 +141,6 @@ export default function NewComparisonSetup() {
   const [annualDrive, setAnnualDrive] = useState(30000);
   const [currency, setCurrency] = useState("INR");
   const [evVehicles, setEvVehicles] = useState<VehicleConfig[]>([{ ...EMPTY_EV }]);
-  const [catalogInitialised, setCatalogInitialised] = useState(false);
   const [iceConfig, setIceConfig] = useState<IceConfig>({ ...defaultIce });
   const [location, setLocation] = useState<LocationConfig>({ 
     electricityPrice: 8.5,
@@ -153,13 +152,21 @@ export default function NewComparisonSetup() {
   const [expandedEvs, setExpandedEvs] = useState<Record<number, boolean>>({});
   const [iceExpanded, setIceExpanded] = useState(false);
 
-  // Set the first EV from catalog once data loads
-  useEffect(() => {
-    if (!catalogInitialised && evCatalog.length > 0) {
-      setCatalogInitialised(true);
-      setEvVehicles([evFromCatalogItem(evCatalog[0])]);
+  const resolvedEvVehicles = useMemo(() => {
+    if (evVehicles.length === 0) {
+      return evVehicles;
     }
-  }, [evCatalog, catalogInitialised]);
+
+    const firstVehicle = evVehicles[0];
+    const hasSelectedPrimaryVehicle =
+      typeof firstVehicle.modelId === "number" || firstVehicle.name !== EMPTY_EV.name;
+
+    if (hasSelectedPrimaryVehicle || evCatalog.length === 0) {
+      return evVehicles;
+    }
+
+    return [evFromCatalogItem(evCatalog[0], firstVehicle.count), ...evVehicles.slice(1)];
+  }, [evCatalog, evVehicles]);
 
   // Modal state
   const [evModalOpen, setEvModalOpen] = useState(false);
@@ -170,7 +177,7 @@ export default function NewComparisonSetup() {
   };
 
   const handleEvSelect = (ev: EvCatalogItem) => {
-    const updated = [...evVehicles];
+    const updated = [...resolvedEvVehicles];
     updated[evModalIndex] = evFromCatalogItem(ev, updated[evModalIndex].count);
     setEvVehicles(updated);
   };
@@ -218,7 +225,7 @@ export default function NewComparisonSetup() {
   ];
 
   const updateEv = (index: number, field: keyof VehicleConfig, value: string | number) => {
-    const updated = [...evVehicles];
+    const updated = [...resolvedEvVehicles];
     (updated[index] as Record<string, unknown>)[field] = value;
     setEvVehicles(updated);
   };
@@ -245,12 +252,12 @@ export default function NewComparisonSetup() {
         return;
       }
 
-      if (!evVehicles.length) {
+      if (!resolvedEvVehicles.length) {
         setSubmitError("At least one EV vehicle is required.");
         return;
       }
 
-      const safeEvVehicles = evVehicles.map((ev) => ({
+      const safeEvVehicles = resolvedEvVehicles.map((ev) => ({
         ...ev,
         name: limitText(ev.name.trim(), MAX_VEHICLE_NAME_LENGTH),
         count: clampNumber(ev.count, MIN_VEHICLE_COUNT, MAX_VEHICLE_COUNT),
@@ -417,7 +424,7 @@ export default function NewComparisonSetup() {
             <p className={styles.sectionDesc}>
               Configure your EV fleet details and specifications
             </p>
-            {evVehicles.map((ev, idx) => (
+            {resolvedEvVehicles.map((ev, idx) => (
               <div key={idx} className={styles.vehicleCard}>
                 <div className={styles.vehicleHeader}>
                   <span className={styles.vehicleBadge}>EV {idx + 1}</span>
@@ -431,11 +438,11 @@ export default function NewComparisonSetup() {
                     >
                       🔍 Browse Vehicles
                     </button>
-                    {evVehicles.length > 1 && (
+                    {resolvedEvVehicles.length > 1 && (
                       <button
                         className={styles.removeBtn}
                         onClick={() =>
-                          setEvVehicles(evVehicles.filter((_, i) => i !== idx))
+                          setEvVehicles(resolvedEvVehicles.filter((_, i) => i !== idx))
                         }
                       >
                         Remove
@@ -508,9 +515,9 @@ export default function NewComparisonSetup() {
             <button
               className={styles.addBtn}
               onClick={() => {
-                const newIndex = evVehicles.length;
+                const newIndex = resolvedEvVehicles.length;
                 setEvVehicles([
-                  ...evVehicles,
+                  ...resolvedEvVehicles,
                   { ...EMPTY_EV, name: `EV Vehicle ${newIndex + 1}` },
                 ]);
                 setEvModalIndex(newIndex);

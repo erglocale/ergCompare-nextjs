@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import EarningsSimulator from "@/components/calculator/EarningsSimulator";
 import { fetchReportDetails } from "@/lib/comparisons";
+import { getVehicleUseCaseProfile } from "@/lib/vehicle-use-cases";
 import resultStyles from "../../new/results.module.css";
 
 type ScenarioCost = {
@@ -74,7 +75,7 @@ export default async function CompareDetailPage({ params }: { params: Promise<{ 
 
   const scenarios: ScenarioCost[] = [
     {
-      label: `ICE Fleet (${input.iceConfig.name})`,
+      label: `ICE (${input.iceConfig.name})`,
       accent: "#D84C3F",
       energy: iceFuel,
       maintenance: iceMaintenance,
@@ -85,7 +86,7 @@ export default async function CompareDetailPage({ params }: { params: Promise<{ 
       rsKm: 0,
     },
     {
-      label: "EV + Public Charging",
+      label: "EV (as-is)",
       accent: "#E39A23",
       energy: evPublicEnergy,
       maintenance: evMaintenance,
@@ -96,7 +97,7 @@ export default async function CompareDetailPage({ params }: { params: Promise<{ 
       rsKm: 0,
     },
     {
-      label: "EV + On-site Charging",
+      label: "EV (optimized)",
       accent: "#3FA66B",
       energy: evOnsiteEnergy,
       maintenance: evMaintenance,
@@ -123,6 +124,8 @@ export default async function CompareDetailPage({ params }: { params: Promise<{ 
 
   const evDisplayName = ev.name;
   const locationName = input.locationName;
+  const vehicleProfile = getVehicleUseCaseProfile(evDisplayName);
+  const activeUseCase = vehicleProfile.defaultUseCase;
 
   return (
     <div className={resultStyles.pageShell}>
@@ -179,11 +182,11 @@ export default async function CompareDetailPage({ params }: { params: Promise<{ 
             <div className={resultStyles.savingsMeta}>{fleetSize} vehicles</div>
           </article>
           <article className={resultStyles.savingsCard}>
-            <div className={resultStyles.savingsLabel}>Savings vs public charging</div>
+            <div className={resultStyles.savingsLabel}>Savings vs EV (as-is)</div>
             <div className={`${resultStyles.savingsValue} ${resultStyles.savingsValueAccent}`}>
               {formatCurrency(annualFleetSavingsVsPublic)}
             </div>
-            <div className={resultStyles.savingsMeta}>with on-site setup</div>
+            <div className={resultStyles.savingsMeta}>optimized vs self-managed</div>
           </article>
         </section>
 
@@ -198,8 +201,8 @@ export default async function CompareDetailPage({ params }: { params: Promise<{ 
                 <tr>
                   <th>Component</th>
                   <th className={resultStyles.thRight} style={{ color: iceScenario.accent }}>ICE</th>
-                  <th className={resultStyles.thRight} style={{ color: publicScenario.accent }}>EV + Public</th>
-                  <th className={resultStyles.thRight} style={{ color: onsiteScenario.accent }}>EV + On-site</th>
+                  <th className={resultStyles.thRight} style={{ color: publicScenario.accent }}>EV (as-is)</th>
+                  <th className={resultStyles.thRight} style={{ color: onsiteScenario.accent }}>EV (optimized)</th>
                 </tr>
               </thead>
               <tbody>
@@ -243,15 +246,37 @@ export default async function CompareDetailPage({ params }: { params: Promise<{ 
             </table>
           </div>
           <div className={resultStyles.tableFooter}>
-            On-site charging TCO shows infrastructure and energy costs only. Fleet management platform pricing is excluded from this report.
+            EV (as-is) assumes self-managed charging. EV (optimized) uses fleet management defaults. Platform pricing discussed during consultation.
           </div>
         </section>
+
+        <div className={resultStyles.confidenceBanner}>
+          <span className={resultStyles.confidenceIcon}>✓</span>
+          <div>
+            <strong>Based on 4,200+ vehicle-days of real fleet data</strong>
+            <span className={resultStyles.confidenceSub}> from ergOS deployments in India</span>
+          </div>
+        </div>
 
         <EarningsSimulator
           monthlyOpCost={onsiteScenario.total / 12}
           fleetSize={fleetSize}
           cityName={locationName}
+          vehicleName={evDisplayName}
+          useCase={activeUseCase}
         />
+
+        <div className={resultStyles.ctaGroup}>
+          <button className={resultStyles.ctaPrimary}>Talk to Our Team →</button>
+          <button className={resultStyles.ctaSecondary}>
+            <span>🔗</span> Share Comparison Link
+          </button>
+        </div>
+
+        <footer className={resultStyles.reportFooter}>
+          <span className={resultStyles.footerBrand}>erg<span className={resultStyles.footerAccent}>Locale</span></span>
+          <div className={resultStyles.footerSub}>Intelligence for EV Fleets and Energy · hello@ergLocale.com</div>
+        </footer>
       </div>
     </div>
   );

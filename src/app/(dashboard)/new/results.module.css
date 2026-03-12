@@ -56,17 +56,16 @@
   display: inline-flex;
   align-items: center;
   font-size: 11px;
-  font-weight: 800;
-  color: var(--text-muted);
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  color: var(--text-muted);
   margin-bottom: 4px;
 }
 
 .reportTitle {
   font-size: 22px;
-  line-height: 1.2;
-  letter-spacing: -0.02em;
+  font-weight: 800;
   color: var(--heading);
   margin: 0 0 4px;
 }
@@ -77,9 +76,39 @@
   margin: 0;
 }
 
+.confidenceBanner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: #e8f5e9;
+  border: 1px solid rgba(76, 175, 80, 0.2);
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.confidenceSub {
+  color: var(--text-light);
+}
+
+.confidenceIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: rgba(76, 175, 80, 0.16);
+  color: #2f855a;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
 .resultCard {
   background: var(--bg-card);
-  border-radius: 8px;
+  border-radius: 10px;
   border: 1px solid var(--border);
   overflow: hidden;
   box-shadow: none;
@@ -295,4 +324,72 @@
   .tcoTable td {
     padding: 12px 14px;
   }
+}
+
+/* CTA buttons */
+.ctaGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ctaPrimary {
+  width: 100%;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 14px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.ctaPrimary:hover {
+  background: var(--primary-dark);
+}
+
+.ctaSecondary {
+  width: 100%;
+  background: var(--bg-card);
+  color: var(--heading);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: border-color 0.15s ease;
+}
+
+.ctaSecondary:hover {
+  border-color: var(--primary);
+}
+
+/* Report footer */
+.reportFooter {
+  text-align: center;
+  padding: 16px 0;
+  border-top: 1px solid var(--border);
+}
+
+.footerBrand {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--heading);
+}
+
+.footerAccent {
+  color: var(--primary);
+}
+
+.footerSub {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
 }

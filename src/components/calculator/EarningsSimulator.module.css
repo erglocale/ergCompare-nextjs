@@ -24,6 +24,10 @@
   color: var(--text-muted);
 }
 
+.headerSub strong {
+  color: var(--primary-dark);
+}
+
 .poweredBadge {
   font-size: 10px;
   color: var(--primary);
@@ -38,94 +42,58 @@
   padding: 20px;
 }
 
-/* Use Case Selector */
-.useCaseSection { margin-bottom: 18px; }
-.sectionLabel {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-light);
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  margin-bottom: 8px;
-}
-
-.useCaseGrid {
+.availabilityGrid {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 6px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 14px;
 }
 
-.useCaseBtn {
-  padding: 10px 8px;
-  border-radius: var(--radius-sm);
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  border: 1px solid var(--border);
-  background: var(--bg-card);
-  color: var(--text);
-  transition: all 0.15s;
-}
-.useCaseBtn:hover {
-  border-color: var(--primary);
-  color: var(--primary);
-}
-.useCaseBtnActive {
-  border: 2px solid var(--primary);
-  background: rgba(249, 116, 23, 0.06);
-  color: var(--primary);
-  font-weight: 700;
+.availabilityCard {
+  padding: 10px;
+  background: var(--bg);
+  border-radius: 6px;
+  border: 1px solid var(--border-light);
 }
 
-/* Benchmark */
-.benchmark {
-  background: #FFF8E1;
-  border: 1px solid rgba(249, 168, 37, 0.2);
-  border-radius: var(--radius-sm);
-  padding: 10px 14px;
-  margin-bottom: 18px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.benchmarkIcon { font-size: 16px; }
-.benchmarkTitle { font-size: 12px; font-weight: 700; color: var(--heading); }
-.benchmarkSub { font-size: 11px; color: var(--text-light); }
-
-/* Sliders */
-.sliderWrap { margin-bottom: 14px; }
-.sliderHeader {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 4px;
-}
-.sliderLabel {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-light);
-}
-.sliderValue {
-  font-size: 14px;
-  font-weight: 800;
-  color: var(--heading);
-}
-.slider {
-  width: 100%;
-  accent-color: var(--primary);
-  height: 6px;
-  cursor: pointer;
-}
-.sliderRange {
-  display: flex;
-  justify-content: space-between;
+.availabilityLabel {
   font-size: 10px;
   color: var(--text-muted);
-  margin-top: 1px;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-bottom: 4px;
 }
-.sliderNote {
+
+.availabilityValue {
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.availabilityUnit {
   font-size: 11px;
+  font-weight: 500;
   color: var(--text-muted);
-  margin-bottom: 8px;
+}
+
+.availabilityTrack {
+  height: 4px;
+  background: #eee;
+  border-radius: 2px;
+  margin-top: 6px;
+  overflow: hidden;
+}
+
+.availabilityFill {
+  height: 100%;
+  border-radius: 2px;
+}
+
+.dangerText {
+  color: #e53935;
+}
+
+.accentText {
+  color: #f9a825;
 }
 
 /* Dark Dashboard */
@@ -165,34 +133,6 @@
   color: #556677;
 }
 
-.breakdownGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-.breakdownItem {
-  background: rgba(255,255,255,0.05);
-  border-radius: 6px;
-  padding: 10px;
-}
-.breakdownLabel {
-  font-size: 9px;
-  color: #667788;
-  text-transform: uppercase;
-  font-weight: 600;
-  margin-bottom: 2px;
-}
-.breakdownValue {
-  font-size: 16px;
-  font-weight: 800;
-  color: #CCC;
-}
-.breakdownUnit {
-  font-size: 10px;
-  font-weight: 500;
-}
-
 .revenueGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -214,6 +154,11 @@
   font-size: 22px;
   font-weight: 800;
   color: #FFFFFF;
+}
+
+.revenueSub {
+  font-size: 10px;
+  color: #556677;
 }
 
 .revenueCardHighlight {
@@ -292,4 +237,25 @@
   margin-top: 10px;
   line-height: 1.5;
   font-style: italic;
+}
+
+@media (max-width: 760px) {
+  .header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .revenueGrid,
+  .availabilityGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .marginRow,
+  .marginResult,
+  .dashboardHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
 }
