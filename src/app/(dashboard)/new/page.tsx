@@ -3,7 +3,7 @@
 import { useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import LocationPickerMap from "@/components/Map/LocationPickerMap";
-import { useCreateComparisonMutation, useEvCatalogQuery } from "@/lib/query-hooks";
+import { useCreateComparisonMutation, useEvCatalogQuery, useIceParametersQuery } from "@/lib/query-hooks";
 import type { EvCatalogItem } from "@/lib/mock-data";
 import styles from "./setup.module.css";
 import catalogStyles from "../vehicles/page.module.css";
@@ -21,7 +21,6 @@ const MAX_PRICE = 1000000000;
 const MAX_BATTERY_CAPACITY = 5000;
 const MAX_RANGE_KM = 5000;
 const MAX_PERCENT = 100;
-const MAX_MILEAGE = 200;
 
 function clampNumber(value: number, min: number, max: number) {
   if (!Number.isFinite(value)) {
@@ -45,7 +44,8 @@ function parseClampedNumber(value: string, min: number, max: number) {
 
 interface VehicleConfig {
   [key: string]: string | number | undefined;
-  modelId?: number;
+  modelId?: number | string;
+  segment?: string;
   name: string;
   count: number;
   price: number;
@@ -85,6 +85,7 @@ const PRESET_CITIES = [
 function evFromCatalogItem(item: EvCatalogItem, count = 10): VehicleConfig {
   return {
     modelId: item.id,
+    segment: item.segment ?? undefined,
     name: item.name,
     count,
     price: item.avg_cost,
@@ -98,6 +99,7 @@ function evFromCatalogItem(item: EvCatalogItem, count = 10): VehicleConfig {
 
 const EMPTY_EV: VehicleConfig = {
   name: "Select a vehicle…",
+  segment: "Other",
   count: 10,
   price: 0,
   batteryCapacity: 0,
@@ -149,6 +151,11 @@ export default function NewComparisonSetup() {
     fixedMonthlyElectricity: 0,
   });
   const [expandedEvs, setExpandedEvs] = useState<Record<number, boolean>>({});
+
+  const activeSegment = evVehicles[0]?.segment && evVehicles[0].segment !== "Other" ? evVehicles[0].segment : undefined;
+  // TODO: extract country code from the location coordinate or just use global config?
+  // Let's rely on segment mapping as the primary resolution for now, per the schema recommendation.
+  const { data: matchedIceParameters } = useIceParametersQuery(activeSegment);
 
   const resolvedEvVehicles = useMemo(() => {
     return evVehicles;
@@ -280,13 +287,15 @@ export default function NewComparisonSetup() {
         resalePercent: clampNumber(ev.resalePercent, 0, MAX_PERCENT),
       }));
 
+      const marketIce = matchedIceParameters && matchedIceParameters.length > 0 ? matchedIceParameters[0] : null;
+
       const safeIceConfig = {
-        ...iceConfig,
-        name: limitText(iceConfig.name.trim(), MAX_VEHICLE_NAME_LENGTH),
-        cost: clampNumber(iceConfig.cost, 0, MAX_PRICE),
-        mileage: clampNumber(iceConfig.mileage, 1, MAX_MILEAGE),
-        maintenancePercent: clampNumber(iceConfig.maintenancePercent, 0, MAX_PERCENT),
-        depreciationPercent: clampNumber(iceConfig.depreciationPercent, 0, MAX_PERCENT),
+        name: marketIce ? `${marketIce.segment || "ICE"} Baseline` : iceConfig.name || "Custom ICE Vehicle",
+        cost: marketIce ? marketIce.cost : Number(iceConfig.cost) || 1200000,
+        mileage: marketIce ? marketIce.mileage : Number(iceConfig.mileage) || 15,
+        fuelType: marketIce ? marketIce.fuel_type : iceConfig.fuelType || "petrol",
+        maintenancePercent: marketIce ? marketIce.maintenance_percent : Number(iceConfig.maintenancePercent) || 5,
+        depreciationPercent: marketIce ? marketIce.residual_percent : Number(iceConfig.depreciationPercent) || 10,
       };
 
       const safeLocation = {

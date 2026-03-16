@@ -14,7 +14,8 @@ export type ComparisonFormPayload = {
   annualDrive: number;
   currency: string;
   evVehicles: Array<{
-    modelId?: number;
+    modelId?: number | string;
+    segment?: string;
     name: string;
     count: number;
     price: number;
@@ -28,7 +29,7 @@ export type ComparisonFormPayload = {
     name: string;
     cost: number;
     mileage: number;
-    fuelType: "petrol" | "diesel";
+    fuelType: string;
     maintenancePercent: number;
     depreciationPercent: number;
   };

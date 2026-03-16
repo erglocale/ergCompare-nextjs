@@ -9,15 +9,20 @@ export interface LocationCity {
   lng: number;
 }
 
+export type LocationSource = "gps" | "manual" | "stored";
+
 interface LocationContextType {
   currentLocation: LocationCity | null;
   setLocation: (city: LocationCity) => void;
+  buildLocationFromCoordinates: (lat: number, lng: number) => Promise<LocationCity>;
   isRequesting: boolean;
   permissionDenied: boolean;
-  requestLocation: () => void;
+  locationSource: LocationSource | null;
+  requestLocation: () => Promise<LocationCity | null>;
 }
 
 const LocationContext = createContext<LocationContextType | undefined>(undefined);
+const STORAGE_KEY = "ergCompare_location";
 
 export function useLocationContext() {
   const context = useContext(LocationContext);
@@ -32,12 +37,13 @@ export default function LocationProvider({ children }: { children: React.ReactNo
   const [mounted, setMounted] = useState(false);
   const [isRequesting, setIsRequesting] = useState(false);
   const [permissionDenied, setPermissionDenied] = useState(false);
+  const [locationSource, setLocationSource] = useState<LocationSource | null>(null);
 
   // Reverse geocode to get a readable region name
-  const reverseGeocode = async (lat: number, lng: number) => {
+  const reverseGeocode = useCallback(async (lat: number, lng: number) => {
     const token = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
     if (!token) return `Location (${lat.toFixed(2)}, ${lng.toFixed(2)})`;
-    
+
     try {
       const res = await fetch(
         `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${token}&types=place,locality&limit=1`
@@ -50,75 +56,97 @@ export default function LocationProvider({ children }: { children: React.ReactNo
       console.error("Reverse geocoding failed", error);
     }
     return `Location (${lat.toFixed(2)}, ${lng.toFixed(2)})`;
-  };
+  }, []);
+
+  const persistLocation = useCallback((city: LocationCity, source: LocationSource) => {
+    setCurrentLocation(city);
+    setLocationSource(source);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(city));
+  }, []);
+
+  const buildLocationFromCoordinates = useCallback(
+    async (lat: number, lng: number) => {
+      const placeName = await reverseGeocode(lat, lng);
+      return {
+        id: `custom-${lat.toFixed(6)}-${lng.toFixed(6)}`,
+        name: placeName,
+        lat,
+        lng,
+      };
+    },
+    [reverseGeocode]
+  );
 
   const requestLocation = useCallback(() => {
-    if (!("geolocation" in navigator)) {
-      console.warn("Geolocation is not supported by this browser.");
-      return;
-    }
+    return new Promise<LocationCity | null>((resolve) => {
+      if (!("geolocation" in navigator)) {
+        console.warn("Geolocation is not supported by this browser.");
+        resolve(null);
+        return;
+      }
 
-    setIsRequesting(true);
-    setPermissionDenied(false);
+      setIsRequesting(true);
+      setPermissionDenied(false);
 
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-        const placeName = await reverseGeocode(latitude, longitude);
-        
-        const loc: LocationCity = {
-          id: `custom-${latitude}-${longitude}`,
-          name: placeName,
-          lat: latitude,
-          lng: longitude,
-        };
-        
-        setCurrentLocation(loc);
-        localStorage.setItem("ergCompare_location", JSON.stringify(loc));
-        setIsRequesting(false);
-      },
-      (error) => {
-        console.error("Error obtaining location", error);
-        setPermissionDenied(true);
-        setIsRequesting(false);
-      },
-      { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
-    );
-  }, []);
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+          const loc = await buildLocationFromCoordinates(latitude, longitude);
+
+          persistLocation(loc, "gps");
+          setIsRequesting(false);
+          resolve(loc);
+        },
+        (error) => {
+          console.error("Error obtaining location", error);
+          setPermissionDenied(true);
+          setIsRequesting(false);
+          resolve(null);
+        },
+        { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
+      );
+    });
+  }, [buildLocationFromCoordinates, persistLocation]);
 
   useEffect(() => {
     // eslint-disable-next-line
     setMounted(true);
-    const stored = localStorage.getItem("ergCompare_location");
+    const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       try {
-        const parsed = JSON.parse(stored);
+        const parsed = JSON.parse(stored) as LocationCity;
         setCurrentLocation(parsed);
+        setLocationSource("stored");
       } catch (e) {
         console.error("Failed to parse stored location", e);
-        requestLocation();
+        void requestLocation();
       }
     } else {
       // First time load: automatically ask for permission
-      requestLocation();
+      void requestLocation();
     }
   }, [requestLocation]);
 
-  const handleSetLocation = (city: LocationCity) => {
-    setCurrentLocation(city);
-    localStorage.setItem("ergCompare_location", JSON.stringify(city));
-  };
+  const handleSetLocation = useCallback(
+    (city: LocationCity) => {
+      persistLocation(city, "manual");
+      setPermissionDenied(false);
+    },
+    [persistLocation]
+  );
 
   if (!mounted) return null; // Avoid hydration mismatch
 
   return (
-    <LocationContext.Provider 
-      value={{ 
-        currentLocation, 
-        setLocation: handleSetLocation, 
+    <LocationContext.Provider
+      value={{
+        currentLocation,
+        setLocation: handleSetLocation,
+        buildLocationFromCoordinates,
         isRequesting,
         permissionDenied,
-        requestLocation
+        locationSource,
+        requestLocation,
       }}
     >
       {children}

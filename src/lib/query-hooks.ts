@@ -5,6 +5,17 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ComparisonFormPayload, DashboardComparison } from "@/lib/comparisons";
 import type { EvCatalogItem } from "@/lib/mock-data";
 
+export interface IceParameter {
+  id: number;
+  segment: string;
+  country_code: string | null;
+  cost: number;
+  mileage: number;
+  fuel_type: string;
+  maintenance_percent: number;
+  residual_percent: number;
+}
+
 export function useEvCatalogQuery(
   search?: string,
   latitude?: number,
@@ -25,6 +36,29 @@ export function useEvCatalogQuery(
       }
       const data = (await response.json()) as EvCatalogItem[];
       return data.sort((a, b) => a.name.localeCompare(b.name));
+    },
+    staleTime: 5 * 60 * 1000, // 5 min cache
+  });
+}
+
+export function useIceParametersQuery(
+  segment?: string,
+  country_code?: string
+) {
+  return useQuery({
+    queryKey: ["ice-parameters", segment ?? "", country_code ?? ""],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (segment) params.set("segment", segment);
+      if (country_code) params.set("country_code", country_code);
+      const qs = params.toString();
+      const url = qs ? `/api/ice-parameter?${qs}` : "/api/ice-parameter";
+      
+      const response = await fetch(url, { cache: "no-store" });
+      if (!response.ok) {
+        throw new Error("Failed to load ICE parameters.");
+      }
+      return (await response.json()) as IceParameter[];
     },
     staleTime: 5 * 60 * 1000, // 5 min cache
   });
