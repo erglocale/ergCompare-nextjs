@@ -2,19 +2,28 @@
   display: flex;
   flex-direction: column;
   gap: 28px;
-  max-width: 900px;
+  max-width: 1200px;
+  margin: 0 auto;
   animation: fadeIn 0.3s ease;
 }
 
+/* Two column layout for Step 0 */
+.twoColumnLayout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  align-items: start;
+}
+
 .header {
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .title {
   font-size: 24px;
   font-weight: 800;
   color: var(--heading);
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .subtitle {
@@ -74,13 +83,13 @@
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-light);
   box-shadow: var(--shadow-sm);
-  padding: 32px;
+  padding: 24px;
   animation: fadeInUp 0.4s ease both;
 }
 
 /* Comparison Name */
 .nameFieldWrap {
-  padding-bottom: 20px;
+  padding-bottom: 16px;
   border-bottom: 1px solid var(--border-light);
 }
 
@@ -94,7 +103,7 @@
 
 .nameInput {
   width: 100%;
-  padding: 14px 18px;
+  padding: 12px 12px;
   border: 2px solid var(--border);
   border-radius: var(--radius-md);
   font-size: 16px;
@@ -129,11 +138,15 @@
   gap: 20px;
 }
 
+.compactSection {
+  gap: 12px;
+}
+
 .sectionTitle {
   font-size: 18px;
   font-weight: 700;
   color: var(--heading);
-  margin-bottom: 0;
+  margin-bottom: 4px;
 }
 
 .sectionTitleRow {
@@ -145,7 +158,22 @@
 .sectionDesc {
   font-size: 13px;
   color: var(--text-muted);
-  margin-top: -8px;
+  margin-top: 0px;
+  margin-bottom: 16px;
+}
+
+.sectionDescCompact {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: -2px 0 6px;
+}
+
+.mapContainer {
+  margin-bottom: 12px;
+  background: var(--bg-card);
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border-light);
 }
 
 /* Form Grid */
@@ -397,10 +425,19 @@
 
 /* Nav */
 .navRow {
+  position: sticky;
+  bottom: 12px;
+  z-index: 20;
   display: flex;
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
+  padding: 10px 12px;
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--bg-card) 92%, white 8%);
+  box-shadow: 0 8px 24px rgba(17, 24, 39, 0.08);
+  backdrop-filter: blur(4px);
 }
 
 .errorBanner {
@@ -416,8 +453,43 @@
   flex: 1;
 }
 
-/* Responsive */
+/* Inline Catalog specific */
+.inlineCatalogContainer {
+  background: var(--bg);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 12px;
+}
+
+.selectableCard {
+  cursor: pointer;
+  border-color: transparent !important;
+}
+
+.selectableCard:hover {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 2px var(--primary-glow) !important;
+}
+
+@media (max-width: 900px) {
+  .twoColumnLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .mapContainer {
+    margin-bottom: 0;
+  }
+}
+
 @media (max-width: 768px) {
+  .page {
+    gap: 18px;
+  }
+
+  .formCard {
+    padding: 16px;
+  }
+
   .formGrid {
     grid-template-columns: 1fr;
   }
@@ -437,5 +509,10 @@
 
   .iceToggleLeft {
     flex-direction: column;
+  }
+
+  .navRow {
+    bottom: 8px;
+    padding: 10px;
   }
 }

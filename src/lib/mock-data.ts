@@ -423,6 +423,8 @@ export interface EvCatalogItem {
   currency_code: string;
   description: string;
   maintenance: number | null;
+  segment: string | null;
+  load_capacity: number | null;
 }
 
 // ── Charger Catalog (mock — replace with /v1/charger_db API) ─────────
