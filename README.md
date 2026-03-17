@@ -1,15 +1,15 @@
 # ergCompare Frontend
 
-Next.js frontend for ergCompare, an EV vs ICE fleet comparison application.
+Next.js frontend for ergCompare, focused on EV vs ICE fleet comparison workflows.
 
-This app provides:
+## What This App Does
 
-- Email/password login against the Flask backend
-- Dashboard of saved comparison reports
-- New comparison flow with map-based location selection
-- EV catalog selection from backend data
-- Comparison results and TCO views
-- Account settings and password change
+- email/password login against the Flask backend
+- dashboard of saved comparison reports
+- vehicle catalog filtered by selected market
+- new comparison flow with map-based location selection
+- EV vs ICE comparison results and report views
+- account settings and password change
 
 ## Stack
 
@@ -22,9 +22,7 @@ This app provides:
 
 ## Architecture
 
-This frontend uses a BFF-style pattern with Next.js route handlers.
-
-Request flow:
+This frontend uses a small BFF layer through Next.js route handlers.
 
 ```text
 Browser -> Next.js app -> Flask backend
@@ -32,32 +30,31 @@ Browser -> Next.js app -> Flask backend
 
 Key points:
 
-- The frontend does not issue JWTs itself
-- Login happens through `src/app/api/auth/login/route.ts`
-- The backend returns a JWT
-- The frontend stores that JWT in an HTTP-only cookie named `ergcompare_access_token`
-- Server-side fetches forward that token to the backend as a Bearer token
+- login is proxied through `src/app/api/auth/login/route.ts`
+- backend JWTs are stored in an HTTP-only cookie
+- server-side fetches forward that JWT to the backend as a Bearer token
+- comparison, catalog, auth, and ICE parameter requests go through `src/app/api/*`
 
 ## Requirements
 
 - Node.js 18+
 - pnpm
-- Running ergCompare backend (`fleets-backend`)
+- running ergCompare backend
 
 ## Environment Variables
 
-Create `./.env.local` with:
+Create `./.env.local` with values appropriate for your environment:
 
 ```env
 NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=<your-mapbox-token>
-NEXT_PUBLIC_APP_URL=http://fleets.localtest.me:3007
-NEXT_PUBLIC_BACKEND_URL=http://127.0.0.1:6009
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_BACKEND_URL=http://127.0.0.1:5000
 ```
 
 Notes:
 
+- `NEXT_PUBLIC_APP_URL` should match the actual local URL and port you choose
 - `NEXT_PUBLIC_BACKEND_URL` must point to the Flask backend
-- In local development the backend runs on port `6009`
 - `.env.local` is gitignored and must not be committed
 
 ## Local Development
@@ -71,28 +68,16 @@ pnpm install
 Start the app:
 
 ```bash
-pnpm dev --hostname 0.0.0.0 --port 3007
+pnpm dev
 ```
 
-Open:
+This frontend does not require a specific port. If the default port is busy, run it on any open port:
 
-```text
-http://fleets.localtest.me:3007
+```bash
+pnpm dev -- --port 3010
 ```
 
-`localtest.me` resolves to `127.0.0.1`, so no hosts file edit is needed.
-
-## Backend Dependency
-
-This app depends on the Flask backend for:
-
-- Login and session validation
-- EV catalog data
-- Project resolution
-- Report create/read/delete
-- Password change
-
-If the backend is not running, login and dashboard data will fail.
+If you change the port, update `NEXT_PUBLIC_APP_URL` to match it.
 
 ## Main Scripts
 
@@ -107,62 +92,49 @@ pnpm lint
 
 - `src/app/login` - login screen
 - `src/app/(dashboard)` - authenticated dashboard area
-- `src/app/api` - BFF route handlers
-- `src/lib/auth.ts` - session and auth helpers
+- `src/app/api` - frontend BFF route handlers
+- `src/lib/auth.ts` - auth and cookie helpers
 - `src/lib/backend.ts` - backend fetch helper
 - `src/lib/query-hooks.ts` - TanStack Query hooks
-- `src/components/Map` - Mapbox location picker
-- `src/components/modals` - EV selection modal
+- `src/components/Map` - location picker map
+- `src/components/modals` - selection modals
 
-## Auth Summary
+## Backend Dependency
 
-Current auth model:
+This app depends on the Flask backend for:
 
-- Self-hosted JWT auth from the Flask backend
-- No Auth0
-- No frontend secret needed for JWT signing
-- JWT secret lives only in backend environment variables
+- login and session validation
+- EV catalog data
+- ICE parameter lookup
+- report create/read/delete
+- password change
 
-Cookie settings:
-
-- `httpOnly: true`
-- `sameSite: "lax"`
-- `secure: true` in production
+If the backend is not running or is misconfigured, login and comparison flows will fail.
 
 ## Deployment
 
-Recommended deployment target for this frontend: Vercel.
+Frontend deployment is handled by Vercel.
 
-Why:
+Current behavior:
 
-- This is not a static-only frontend
-- It uses Next.js route handlers and server-side auth checks
-- It needs a running Node/Next.js server environment
+- pushes to the `main` branch trigger deployment to Vercel
+- Vercel handles the Next.js build and hosting
+- frontend environment variables are configured in Vercel, not in this repo
 
-At deploy time, configure these env vars in Vercel:
+There is no frontend GitHub Actions deployment workflow in this repository. The deployment is managed directly by the Vercel project integration.
+
+At deploy time, make sure these environment variables exist in Vercel:
 
 - `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN`
 - `NEXT_PUBLIC_APP_URL`
 - `NEXT_PUBLIC_BACKEND_URL`
 
-The backend remains deployed separately.
-
-## GitHub Readiness
-
-Before pushing:
-
-- Keep `.env.local` uncommitted
-- Do not commit `.next/`
-- Do not commit `node_modules/`
-- Verify backend URLs are environment-driven, not hardcoded for production
-
 ## Notes
 
-- Vehicle images are loaded from the existing S3 asset bucket using vehicle ID
-- Map reverse geocoding uses the public Mapbox token
-- Currency formatting on the results page still has follow-up work planned
+- vehicle images are loaded from the existing S3 asset bucket by vehicle ID
+- market-aware ICE defaults are fetched through `/api/ice-parameter`
+- report pages use the saved comparison payload, so historical reports stay stable even if backend defaults change later
 
-## Related Repos
+## Related Repo
 
-- `fleets-backend` - Flask backend API and JWT auth
-
+- `fleets-backend` - Flask backend API, auth, reports, migrations, and deployment target
