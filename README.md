@@ -55,6 +55,7 @@ Notes:
 
 - `NEXT_PUBLIC_APP_URL` should match the actual local URL and port you choose
 - `NEXT_PUBLIC_BACKEND_URL` must point to the Flask backend
+- `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` your mapbox access token
 - `.env.local` is gitignored and must not be committed
 
 ## Local Development

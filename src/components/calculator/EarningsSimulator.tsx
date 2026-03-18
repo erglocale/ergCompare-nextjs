@@ -1,6 +1,8 @@
 "use client";
 
+import { formatCurrencyValue } from "@/lib/currency";
 import { getVehicleUseCaseOption, type VehicleUseCaseId } from "@/lib/vehicle-use-cases";
+
 import styles from "./EarningsSimulator.module.css";
 
 interface EarningsSimulatorProps {
@@ -9,11 +11,13 @@ interface EarningsSimulatorProps {
   cityName: string;
   vehicleName: string;
   useCase: VehicleUseCaseId;
+  currencyCode?: string;
 }
 
-const fmt = (n: number) => "₹" + Math.round(n).toLocaleString("en-IN");
-
-const EARNINGS_BY_USE_CASE: Record<VehicleUseCaseId, { perVehicleMonth: number; source: string }> = {
+const EARNINGS_BY_USE_CASE: Record<
+  VehicleUseCaseId,
+  { perVehicleMonth: number; source: string }
+> = {
   delivery: { perVehicleMonth: 65000, source: "e-commerce last-mile" },
   logistics: { perVehicleMonth: 55000, source: "regional logistics" },
   rental: { perVehicleMonth: 48000, source: "corporate fleet rental" },
@@ -27,13 +31,14 @@ export default function EarningsSimulator({
   cityName,
   vehicleName,
   useCase,
+  currencyCode = "USD",
 }: EarningsSimulatorProps) {
   const currentUseCase = getVehicleUseCaseOption(useCase);
   const earningData = EARNINGS_BY_USE_CASE[useCase];
   const optimizedPerVehicle = earningData.perVehicleMonth * (DOWNTIME.evOpt / 26);
-  const asIsPerVehicle = earningData.perVehicleMonth * (DOWNTIME.evAsIs / 26);
   const optimizedFleetRevenue = optimizedPerVehicle * fleetSize;
   const marginPerVehicle = optimizedPerVehicle - monthlyOpCost;
+  const fmt = (value: number) => formatCurrencyValue(value, currencyCode);
 
   return (
     <div className={styles.card}>
@@ -41,7 +46,7 @@ export default function EarningsSimulator({
         <div>
           <div className={styles.headerTitle}>Estimated Fleet Earnings</div>
           <div className={styles.headerSub}>
-            <strong>{currentUseCase.label}</strong> · {earningData.source}
+            <strong>{currentUseCase.label}</strong> | {earningData.source}
           </div>
         </div>
         <div className={styles.poweredBadge}>
@@ -79,46 +84,36 @@ export default function EarningsSimulator({
               <span>Your Fleet on ergOS</span>
             </div>
             <span className={styles.dashboardMeta}>
-              {fleetSize} vehicles · {cityName}
+              {fleetSize} vehicles | {cityName} | {vehicleName}
             </span>
           </div>
 
           <div className={styles.revenueGrid}>
             <div className={styles.revenueCard}>
-              <div className={styles.revenueLabel}>
-                Revenue / Vehicle / Month
-              </div>
-              <div className={styles.revenueValue}>
-                {fmt(optimizedPerVehicle)}
-              </div>
+              <div className={styles.revenueLabel}>Revenue / Vehicle / Month</div>
+              <div className={styles.revenueValue}>{fmt(optimizedPerVehicle)}</div>
               <div className={styles.revenueSub}>{DOWNTIME.evOpt} earning days</div>
             </div>
             <div className={styles.revenueCardHighlight}>
-              <div className={styles.revenueHighlightLabel}>
-                Fleet Revenue / Month
-              </div>
-              <div className={styles.revenueHighlightValue}>
-                {fmt(optimizedFleetRevenue)}
-              </div>
-              <div className={styles.revenueHighlightSub}>
-                {fleetSize} vehicles
-              </div>
+              <div className={styles.revenueHighlightLabel}>Fleet Revenue / Month</div>
+              <div className={styles.revenueHighlightValue}>{fmt(optimizedFleetRevenue)}</div>
+              <div className={styles.revenueHighlightSub}>{fleetSize} vehicles</div>
             </div>
           </div>
 
           <div className={styles.marginSection}>
             <div className={styles.marginRow}>
-              <span className={styles.marginLabel}>
-                Vehicle operating cost
-              </span>
-              <span className={styles.marginCost}>– {fmt(monthlyOpCost)}</span>
+              <span className={styles.marginLabel}>Vehicle operating cost</span>
+              <span className={styles.marginCost}>- {fmt(monthlyOpCost)}</span>
             </div>
             <div className={styles.marginResult}>
               <span className={styles.marginResultLabel}>
                 Margin per vehicle (before driver & overhead)
               </span>
               <span
-                className={`${styles.marginResultValue} ${marginPerVehicle > 0 ? styles.positive : styles.negative}`}
+                className={`${styles.marginResultValue} ${
+                  marginPerVehicle > 0 ? styles.positive : styles.negative
+                }`}
               >
                 {fmt(marginPerVehicle)}
                 <span className={styles.marginUnit}>/mo</span>
@@ -128,7 +123,9 @@ export default function EarningsSimulator({
         </div>
 
         <div className={styles.disclaimer}>
-          Earnings based on {earningData.source} benchmarks. Actual revenue depends on contracts, routes, and utilization. ergOS provides fleet operations that logistics partners require for onboarding.
+          Earnings based on {earningData.source} benchmarks. Actual revenue depends on
+          contracts, routes, and utilization. ergOS provides fleet operations that
+          logistics partners require for onboarding.
         </div>
       </div>
     </div>

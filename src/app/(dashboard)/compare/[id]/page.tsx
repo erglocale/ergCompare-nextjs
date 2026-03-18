@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+
 import EarningsSimulator from "@/components/calculator/EarningsSimulator";
 import { fetchReportDetails } from "@/lib/comparisons";
+import { formatCurrencyValue } from "@/lib/currency";
 import { getVehicleUseCaseProfile } from "@/lib/vehicle-use-cases";
+
 import resultStyles from "../../new/results.module.css";
 
 type ScenarioCost = {
@@ -18,15 +21,11 @@ type ScenarioCost = {
   rsKm: number;
 };
 
-function formatCurrency(value: number) {
-  return `₹${Math.round(value).toLocaleString("en-IN")}`;
-}
-
-function formatRsPerKm(value: number) {
-  return `₹${value.toFixed(2)}`;
-}
-
-export default async function CompareDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function CompareDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const resolvedParams = await params;
   const backendDetails = await fetchReportDetails(resolvedParams.id).catch(() => null);
 
@@ -36,42 +35,43 @@ export default async function CompareDetailPage({ params }: { params: Promise<{ 
   }
 
   const reportName = backendDetails?.report.name ?? input.comparisonName;
-  const reportDate = new Date(backendDetails?.report.created ?? Date.now()).toLocaleDateString("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
+  const reportDate = backendDetails?.report.created
+    ? new Date(backendDetails.report.created).toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      })
+    : "Unknown date";
+  const currencyCode = input.currency || "USD";
 
-  // ── Pull everything from the user's saved input ──
   const ev = input.evVehicles[0];
-  const fleetSize = input.evVehicles.reduce((t, v) => t + v.count, 0);
+  const fleetSize = input.evVehicles.reduce((total, vehicle) => total + vehicle.count, 0);
   const annualKm = input.annualDrive;
   const contractYears = input.contractYears;
   const loc = input.location;
 
-  // EV calculations — from the actual vehicle the user selected
-  const efficiency = ev.batteryCapacity / ev.range; // kWh/km
-  const onsiteRate = loc.electricityPrice; // user's configured electricity price
-  const publicRate = onsiteRate * 2; // public charging ~2× commercial rate
+  const efficiency = ev.batteryCapacity / ev.range;
+  const onsiteRate = loc.electricityPrice;
+  const publicRate = onsiteRate * 2;
   const evCapex = ev.price / contractYears;
   const evResidual = (ev.price * (ev.resalePercent / 100)) / contractYears;
   const evMaintenance = ev.maintenanceCost > 0 ? ev.maintenanceCost : annualKm * 0.52;
   const evPublicEnergy = annualKm * efficiency * publicRate;
   const evOnsiteEnergy = annualKm * efficiency * onsiteRate;
 
-  // Charger infra (smart ratio: 1 charger per 2.5 vehicles)
   const chargerRatio = 0.4;
   const chargerUnitCost = 120_000 + 30_000;
   const chargerInfraPerVehicle =
     (Math.ceil(fleetSize * chargerRatio) * chargerUnitCost) / fleetSize / contractYears;
 
-  // ICE calculations — from the user's configured ICE vehicle
   const fuelPrice =
     input.iceConfig.fuelType === "diesel" ? loc.fuelCostDiesel : loc.fuelCostPetrol;
   const iceFuel = (annualKm / input.iceConfig.mileage) * fuelPrice;
   const iceCapex = input.iceConfig.cost / contractYears;
-  const iceResidual = (input.iceConfig.cost * (input.iceConfig.depreciationPercent / 100)) / contractYears;
-  const iceMaintenance = input.iceConfig.cost * (input.iceConfig.maintenancePercent / 100);
+  const iceResidual =
+    (input.iceConfig.cost * (input.iceConfig.depreciationPercent / 100)) / contractYears;
+  const iceMaintenance =
+    input.iceConfig.cost * (input.iceConfig.maintenancePercent / 100);
 
   const scenarios: ScenarioCost[] = [
     {
@@ -107,9 +107,8 @@ export default async function CompareDetailPage({ params }: { params: Promise<{ 
       total: evOnsiteEnergy + evMaintenance + evCapex + chargerInfraPerVehicle - evResidual,
       rsKm: 0,
     },
-  ].map((s) => ({ ...s, rsKm: s.total / annualKm }));
+  ].map((scenario) => ({ ...scenario, rsKm: scenario.total / annualKm }));
 
-  // Add savings tag to on-site scenario
   const [iceScenario, publicScenario, onsiteScenario] = scenarios;
   const savingsPct = Math.round(
     ((iceScenario.total - onsiteScenario.total) / iceScenario.total) * 100
@@ -118,9 +117,10 @@ export default async function CompareDetailPage({ params }: { params: Promise<{ 
     onsiteScenario.tag = `${savingsPct}% lower`;
   }
 
-  const maxRsKm = Math.max(...scenarios.map((s) => s.rsKm));
+  const maxRsKm = Math.max(...scenarios.map((scenario) => scenario.rsKm));
   const annualFleetSavingsVsIce = (iceScenario.total - onsiteScenario.total) * fleetSize;
-  const annualFleetSavingsVsPublic = (publicScenario.total - onsiteScenario.total) * fleetSize;
+  const annualFleetSavingsVsPublic =
+    (publicScenario.total - onsiteScenario.total) * fleetSize;
 
   const evDisplayName = ev.name;
   const locationName = input.locationName;
@@ -132,7 +132,7 @@ export default async function CompareDetailPage({ params }: { params: Promise<{ 
       <div className={resultStyles.resultsWrap}>
         <div className={resultStyles.backRow}>
           <Link href="/" className={resultStyles.backButton}>
-            ← Back to dashboard
+            Back to dashboard
           </Link>
         </div>
 
@@ -140,22 +140,25 @@ export default async function CompareDetailPage({ params }: { params: Promise<{ 
           <div className={resultStyles.reportEyebrow}>Fleet Transition Report</div>
           <h1 className={resultStyles.reportTitle}>{reportName}</h1>
           <p className={resultStyles.reportMeta}>
-            {fleetSize} × {evDisplayName} · {locationName} · {input.iceConfig.name} comparison · Created {reportDate}
+            {fleetSize} x {evDisplayName} | {locationName} | {input.iceConfig.name} comparison |
+            {" "}Created {reportDate}
           </p>
         </header>
 
         <section className={resultStyles.resultCard}>
-          <div className={resultStyles.resultCardHeader}>
-            Cost per kilometer
-          </div>
+          <div className={resultStyles.resultCardHeader}>Cost per kilometer</div>
           <div className={resultStyles.barsWrap}>
             {scenarios.map((scenario) => (
               <div key={scenario.label} className={resultStyles.barRow}>
                 <div className={resultStyles.barMeta}>
                   <span className={resultStyles.barLabel}>{scenario.label}</span>
                   <div className={resultStyles.barValueWrap}>
-                    {scenario.tag ? <span className={resultStyles.savingsTag}>{scenario.tag}</span> : null}
-                    <span className={resultStyles.barValue} style={{ color: scenario.accent }}>{formatRsPerKm(scenario.rsKm)}</span>
+                    {scenario.tag ? (
+                      <span className={resultStyles.savingsTag}>{scenario.tag}</span>
+                    ) : null}
+                    <span className={resultStyles.barValue} style={{ color: scenario.accent }}>
+                      {formatCurrencyValue(scenario.rsKm, currencyCode, 2)}
+                    </span>
                     <span className={resultStyles.barUnit}>/km</span>
                   </div>
                 </div>
@@ -176,15 +179,19 @@ export default async function CompareDetailPage({ params }: { params: Promise<{ 
         <section className={resultStyles.savingsGrid}>
           <article className={resultStyles.savingsCard}>
             <div className={resultStyles.savingsLabel}>Annual savings vs ICE</div>
-            <div className={`${resultStyles.savingsValue} ${resultStyles.savingsValuePositive}`}>
-              {formatCurrency(annualFleetSavingsVsIce)}
+            <div
+              className={`${resultStyles.savingsValue} ${resultStyles.savingsValuePositive}`}
+            >
+              {formatCurrencyValue(annualFleetSavingsVsIce, currencyCode)}
             </div>
             <div className={resultStyles.savingsMeta}>{fleetSize} vehicles</div>
           </article>
           <article className={resultStyles.savingsCard}>
             <div className={resultStyles.savingsLabel}>Savings vs EV (as-is)</div>
-            <div className={`${resultStyles.savingsValue} ${resultStyles.savingsValueAccent}`}>
-              {formatCurrency(annualFleetSavingsVsPublic)}
+            <div
+              className={`${resultStyles.savingsValue} ${resultStyles.savingsValueAccent}`}
+            >
+              {formatCurrencyValue(annualFleetSavingsVsPublic, currencyCode)}
             </div>
             <div className={resultStyles.savingsMeta}>optimized vs self-managed</div>
           </article>
@@ -200,18 +207,47 @@ export default async function CompareDetailPage({ params }: { params: Promise<{ 
               <thead>
                 <tr>
                   <th>Component</th>
-                  <th className={resultStyles.thRight} style={{ color: iceScenario.accent }}>ICE</th>
-                  <th className={resultStyles.thRight} style={{ color: publicScenario.accent }}>EV (as-is)</th>
-                  <th className={resultStyles.thRight} style={{ color: onsiteScenario.accent }}>EV (optimized)</th>
+                  <th className={resultStyles.thRight} style={{ color: iceScenario.accent }}>
+                    ICE
+                  </th>
+                  <th className={resultStyles.thRight} style={{ color: publicScenario.accent }}>
+                    EV (as-is)
+                  </th>
+                  <th className={resultStyles.thRight} style={{ color: onsiteScenario.accent }}>
+                    EV (optimized)
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {[
-                  { label: "Fuel / Energy", values: [iceScenario.energy, publicScenario.energy, onsiteScenario.energy] },
-                  { label: "Vehicle maintenance", values: [iceScenario.maintenance, publicScenario.maintenance, onsiteScenario.maintenance] },
-                  { label: "Vehicle capex (amortized)", values: [iceScenario.capex, publicScenario.capex, onsiteScenario.capex] },
-                  { label: "Charging infra (amortized)", values: [null, null, onsiteScenario.infrastructure] },
-                  { label: "Residual value (credit)", values: [-iceScenario.residual, -publicScenario.residual, -onsiteScenario.residual] },
+                  {
+                    label: "Fuel / Energy",
+                    values: [iceScenario.energy, publicScenario.energy, onsiteScenario.energy],
+                  },
+                  {
+                    label: "Vehicle maintenance",
+                    values: [
+                      iceScenario.maintenance,
+                      publicScenario.maintenance,
+                      onsiteScenario.maintenance,
+                    ],
+                  },
+                  {
+                    label: "Vehicle capex (amortized)",
+                    values: [iceScenario.capex, publicScenario.capex, onsiteScenario.capex],
+                  },
+                  {
+                    label: "Charging infra (amortized)",
+                    values: [null, null, onsiteScenario.infrastructure],
+                  },
+                  {
+                    label: "Residual value (credit)",
+                    values: [
+                      -iceScenario.residual,
+                      -publicScenario.residual,
+                      -onsiteScenario.residual,
+                    ],
+                  },
                 ].map((row) => (
                   <tr key={row.label}>
                     <td>{row.label}</td>
@@ -219,9 +255,20 @@ export default async function CompareDetailPage({ params }: { params: Promise<{ 
                       <td
                         key={`${row.label}-${index}`}
                         className={resultStyles.tdRight}
-                        style={{ color: value === null ? "var(--text-muted)" : index === 2 ? onsiteScenario.accent : undefined }}
+                        style={{
+                          color:
+                            value === null
+                              ? "var(--text-muted)"
+                              : index === 2
+                                ? onsiteScenario.accent
+                                : undefined,
+                        }}
                       >
-                        {value === null ? "—" : value < 0 ? `(${formatCurrency(Math.abs(value))})` : formatCurrency(value)}
+                        {value === null
+                          ? "-"
+                          : value < 0
+                            ? `(${formatCurrencyValue(Math.abs(value), currencyCode)})`
+                            : formatCurrencyValue(value, currencyCode)}
                       </td>
                     ))}
                   </tr>
@@ -229,16 +276,24 @@ export default async function CompareDetailPage({ params }: { params: Promise<{ 
                 <tr className={resultStyles.totalRow}>
                   <td>Total annual operating cost</td>
                   {[iceScenario, publicScenario, onsiteScenario].map((scenario) => (
-                    <td key={`${scenario.label}-total`} className={resultStyles.tdRight} style={{ color: scenario.accent }}>
-                      {formatCurrency(scenario.total)}
+                    <td
+                      key={`${scenario.label}-total`}
+                      className={resultStyles.tdRight}
+                      style={{ color: scenario.accent }}
+                    >
+                      {formatCurrencyValue(scenario.total, currencyCode)}
                     </td>
                   ))}
                 </tr>
                 <tr className={resultStyles.totalRow}>
-                  <td>₹ / km</td>
+                  <td>{currencyCode} / km</td>
                   {[iceScenario, publicScenario, onsiteScenario].map((scenario) => (
-                    <td key={`${scenario.label}-rskm`} className={resultStyles.tdRight} style={{ color: scenario.accent }}>
-                      {formatRsPerKm(scenario.rsKm)}
+                    <td
+                      key={`${scenario.label}-rskm`}
+                      className={resultStyles.tdRight}
+                      style={{ color: scenario.accent }}
+                    >
+                      {formatCurrencyValue(scenario.rsKm, currencyCode, 2)}
                     </td>
                   ))}
                 </tr>
@@ -246,12 +301,13 @@ export default async function CompareDetailPage({ params }: { params: Promise<{ 
             </table>
           </div>
           <div className={resultStyles.tableFooter}>
-            EV (as-is) assumes self-managed charging. EV (optimized) uses fleet management defaults. Platform pricing discussed during consultation.
+            EV (as-is) assumes self-managed charging. EV (optimized) uses fleet
+            management defaults. Platform pricing discussed during consultation.
           </div>
         </section>
 
         <div className={resultStyles.confidenceBanner}>
-          <span className={resultStyles.confidenceIcon}>✓</span>
+          <span className={resultStyles.confidenceIcon}>OK</span>
           <div>
             <strong>Based on 4,200+ vehicle-days of real fleet data</strong>
             <span className={resultStyles.confidenceSub}> from ergOS deployments in India</span>
@@ -264,18 +320,23 @@ export default async function CompareDetailPage({ params }: { params: Promise<{ 
           cityName={locationName}
           vehicleName={evDisplayName}
           useCase={activeUseCase}
+          currencyCode={currencyCode}
         />
 
         <div className={resultStyles.ctaGroup}>
-          <button className={resultStyles.ctaPrimary}>Talk to Our Team →</button>
+          <button className={resultStyles.ctaPrimary}>Talk to Our Team</button>
           <button className={resultStyles.ctaSecondary}>
-            <span>🔗</span> Share Comparison Link
+            <span>Link</span> Share Comparison Link
           </button>
         </div>
 
         <footer className={resultStyles.reportFooter}>
-          <span className={resultStyles.footerBrand}>erg<span className={resultStyles.footerAccent}>Locale</span></span>
-          <div className={resultStyles.footerSub}>Intelligence for EV Fleets and Energy · hello@ergLocale.com</div>
+          <span className={resultStyles.footerBrand}>
+            erg<span className={resultStyles.footerAccent}>Locale</span>
+          </span>
+          <div className={resultStyles.footerSub}>
+            Intelligence for EV Fleets and Energy | hello@ergLocale.com
+          </div>
         </footer>
       </div>
     </div>

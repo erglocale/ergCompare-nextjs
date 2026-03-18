@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type { ComparisonFormPayload, DashboardComparison } from "@/lib/comparisons";
+import type { CurrencyRecord } from "@/lib/currency";
 import type { EvCatalogItem } from "@/lib/mock-data";
 
 export interface IceParameter {
@@ -14,6 +15,52 @@ export interface IceParameter {
   fuel_type: string;
   maintenance_percent: number;
   residual_percent: number;
+}
+
+export function useLocationCurrencyQuery(latitude?: number, longitude?: number) {
+  return useQuery({
+    queryKey: ["location-currency", latitude ?? null, longitude ?? null],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (typeof latitude === "number" && typeof longitude === "number") {
+        params.set("location", `${latitude},${longitude}`);
+      }
+
+      const qs = params.toString();
+      const url = qs ? `/api/currency?${qs}` : "/api/currency";
+      const response = await fetch(url, { cache: "no-store" });
+      if (!response.ok) {
+        throw new Error("Failed to resolve currency.");
+      }
+
+      return (await response.json()) as CurrencyRecord[];
+    },
+    enabled: typeof latitude === "number" && typeof longitude === "number",
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useCurrencyByCodeQuery(currencyCode?: string) {
+  return useQuery({
+    queryKey: ["currency", currencyCode ?? ""],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (currencyCode) {
+        params.set("id", currencyCode);
+      }
+
+      const qs = params.toString();
+      const url = qs ? `/api/currency?${qs}` : "/api/currency";
+      const response = await fetch(url, { cache: "no-store" });
+      if (!response.ok) {
+        throw new Error("Failed to load currency.");
+      }
+
+      return (await response.json()) as CurrencyRecord[];
+    },
+    enabled: Boolean(currencyCode),
+    staleTime: 5 * 60 * 1000,
+  });
 }
 
 export function useEvCatalogQuery(

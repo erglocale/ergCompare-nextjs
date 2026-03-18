@@ -3,7 +3,14 @@
 import { useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import LocationPickerMap from "@/components/Map/LocationPickerMap";
-import { useCreateComparisonMutation, useEvCatalogQuery, useIceParametersQuery } from "@/lib/query-hooks";
+import { convertCurrencyAmount, type CurrencyRecord, USD_CURRENCY } from "@/lib/currency";
+import {
+  useCreateComparisonMutation,
+  useCurrencyByCodeQuery,
+  useEvCatalogQuery,
+  useIceParametersQuery,
+  useLocationCurrencyQuery,
+} from "@/lib/query-hooks";
 import type { EvCatalogItem } from "@/lib/mock-data";
 import styles from "./setup.module.css";
 import catalogStyles from "../vehicles/page.module.css";
@@ -46,6 +53,8 @@ interface VehicleConfig {
   [key: string]: string | number | undefined;
   modelId?: number | string;
   segment?: string;
+  catalogPriceUsd?: number;
+  priceManuallyEdited?: number;
   name: string;
   count: number;
   price: number;
@@ -82,13 +91,19 @@ const PRESET_CITIES = [
 
 // Charger costs are now auto-calculated using smart ratio
 
-function evFromCatalogItem(item: EvCatalogItem, count = 10): VehicleConfig {
+function evFromCatalogItem(
+  item: EvCatalogItem,
+  targetCurrency: CurrencyRecord,
+  count = 10
+): VehicleConfig {
   return {
     modelId: item.id,
     segment: item.segment ?? undefined,
+    catalogPriceUsd: item.avg_cost,
+    priceManuallyEdited: 0,
     name: item.name,
     count,
-    price: item.avg_cost,
+    price: convertCurrencyAmount(USD_CURRENCY, targetCurrency, item.avg_cost),
     batteryCapacity: item.battery_capacity,
     range: item.max_range,
     chargeCyclesPerDay: 1,
@@ -100,6 +115,8 @@ function evFromCatalogItem(item: EvCatalogItem, count = 10): VehicleConfig {
 const EMPTY_EV: VehicleConfig = {
   name: "Select a vehicle…",
   segment: "Other",
+  catalogPriceUsd: undefined,
+  priceManuallyEdited: 0,
   count: 10,
   price: 0,
   batteryCapacity: 0,
@@ -140,7 +157,7 @@ export default function NewComparisonSetup() {
   const [locationName, setLocationName] = useState(PRESET_CITIES[0].name);
   const [contractYears, setContractYears] = useState(8);
   const [annualDrive, setAnnualDrive] = useState(30000);
-  const [currency, setCurrency] = useState("INR");
+  const [currencyFallback, setCurrencyFallback] = useState("INR");
   const [evVehicles, setEvVehicles] = useState<VehicleConfig[]>([{ ...EMPTY_EV }]);
   const [iceConfig] = useState<IceConfig>({ ...defaultIce });
   const [location, setLocation] = useState<LocationConfig>({ 
@@ -156,10 +173,39 @@ export default function NewComparisonSetup() {
   // TODO: extract country code from the location coordinate or just use global config?
   // Let's rely on segment mapping as the primary resolution for now, per the schema recommendation.
   const { data: matchedIceParameters } = useIceParametersQuery(activeSegment);
+  const {
+    data: locationCurrencies = [],
+    isLoading: currencyLoading,
+    isFetching: currencyFetching,
+  } = useLocationCurrencyQuery(mapCoords.latitude, mapCoords.longitude);
+  const { data: fallbackCurrencies = [] } = useCurrencyByCodeQuery(currencyFallback);
+  const resolvedCurrency = locationCurrencies[0] ?? fallbackCurrencies[0] ?? null;
+  const activeCurrency = resolvedCurrency ?? USD_CURRENCY;
+  const currency = resolvedCurrency?.id ?? currencyFallback;
 
   const resolvedEvVehicles = useMemo(() => {
-    return evVehicles;
-  }, [evVehicles]);
+    if (!resolvedCurrency) {
+      return evVehicles;
+    }
+
+    return evVehicles.map((vehicle) => {
+      if (
+        typeof vehicle.catalogPriceUsd !== "number" ||
+        vehicle.priceManuallyEdited === 1
+      ) {
+        return vehicle;
+      }
+
+      return {
+        ...vehicle,
+        price: convertCurrencyAmount(
+          USD_CURRENCY,
+          resolvedCurrency,
+          vehicle.catalogPriceUsd
+        ),
+      };
+    });
+  }, [evVehicles, resolvedCurrency]);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSegment, setSelectedSegment] = useState("All");
@@ -198,19 +244,19 @@ export default function NewComparisonSetup() {
 
   const handleEvSelect = (ev: EvCatalogItem) => {
     // We restrict to a single EV in this refined flow
-    setEvVehicles([evFromCatalogItem(ev, 10)]); // Default count 10
+    setEvVehicles([evFromCatalogItem(ev, activeCurrency, 10)]); // Default count 10
   };
 
   const selectPresetCity = (city: typeof PRESET_CITIES[0]) => {
     setMapCoords({ latitude: city.lat, longitude: city.lng });
     setLocationName(limitText(city.name, MAX_LOCATION_NAME_LENGTH));
-    setCurrency(city.currency);
-    setLocation({
-      ...location,
+    setCurrencyFallback(city.currency);
+    setLocation((currentLocation) => ({
+      ...currentLocation,
       electricityPrice: city.electricity,
       fuelCostPetrol: city.petrol,
       fuelCostDiesel: city.diesel,
-    });
+    }));
   };
 
   // Reverse-geocode coordinates to get a human-readable location name
@@ -245,6 +291,9 @@ export default function NewComparisonSetup() {
   const updateEv = (index: number, field: keyof VehicleConfig, value: string | number) => {
     const updated = [...resolvedEvVehicles];
     (updated[index] as Record<string, unknown>)[field] = value;
+    if (field === "price") {
+      updated[index].priceManuallyEdited = 1;
+    }
     setEvVehicles(updated);
   };
 
@@ -275,8 +324,19 @@ export default function NewComparisonSetup() {
         return;
       }
 
+      if ((currencyLoading || currencyFetching) && !resolvedCurrency) {
+        setSubmitError("Currency is still loading for the selected location.");
+        return;
+      }
+
+      if (!resolvedCurrency && currencyFallback !== USD_CURRENCY.id) {
+        setSubmitError("Unable to resolve the market currency for the selected location.");
+        return;
+      }
+
       const safeEvVehicles = resolvedEvVehicles.map((ev) => ({
-        ...ev,
+        modelId: ev.modelId,
+        segment: ev.segment,
         name: limitText(ev.name.trim(), MAX_VEHICLE_NAME_LENGTH),
         count: clampNumber(ev.count, MIN_VEHICLE_COUNT, MAX_VEHICLE_COUNT),
         price: clampNumber(ev.price, 0, MAX_PRICE),
@@ -314,7 +374,7 @@ export default function NewComparisonSetup() {
           includeIce: true,
           contractYears: clampNumber(contractYears, MIN_CONTRACT_YEARS, MAX_CONTRACT_YEARS),
           annualDrive: clampNumber(annualDrive, MIN_ANNUAL_DRIVE, MAX_ANNUAL_DRIVE),
-          currency,
+          currency: resolvedCurrency?.id ?? currency,
           evVehicles: safeEvVehicles,
           iceConfig: safeIceConfig,
           location: safeLocation,

@@ -46,7 +46,7 @@ export async function getSession(): Promise<AuthSession | null> {
     cache: "no-store",
   });
 
-  if (response.status === 401 || response.status === 403) {
+  if (response.status === 400 || response.status === 401 || response.status === 403) {
     return null;
   }
 
