@@ -46,7 +46,7 @@ export default function EarningsSimulator({
         <div>
           <div className={styles.headerTitle}>Estimated Fleet Earnings</div>
           <div className={styles.headerSub}>
-            <strong>{currentUseCase.label}</strong> | {earningData.source}
+            <strong>{currentUseCase.label}</strong> - {earningData.source}
           </div>
         </div>
         <div className={styles.poweredBadge}>
@@ -84,7 +84,7 @@ export default function EarningsSimulator({
               <span>Your Fleet on ergOS</span>
             </div>
             <span className={styles.dashboardMeta}>
-              {fleetSize} vehicles | {cityName} | {vehicleName}
+              {fleetSize} vehicles - {cityName}
             </span>
           </div>
 

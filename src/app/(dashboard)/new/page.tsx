@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import LocationPickerMap from "@/components/Map/LocationPickerMap";
 import { convertCurrencyAmount, type CurrencyRecord, USD_CURRENCY } from "@/lib/currency";
 import {
   useCreateComparisonMutation,
   useCurrencyByCodeQuery,
+  useEnergyPriceQuery,
   useEvCatalogQuery,
   useIceParametersQuery,
   useLocationCurrencyQuery,
@@ -83,10 +84,10 @@ interface LocationConfig {
 }
 
 const PRESET_CITIES = [
-  { name: "Bengaluru, India", lat: 12.9716, lng: 77.5946, currency: "INR", electricity: 8.5, petrol: 102, diesel: 88 },
-  { name: "Pune, India", lat: 18.5204, lng: 73.8567, currency: "INR", electricity: 9.0, petrol: 104, diesel: 91 },
-  { name: "Delhi, India", lat: 28.7041, lng: 77.1025, currency: "INR", electricity: 7.5, petrol: 94, diesel: 87 },
-  { name: "San Francisco, USA", lat: 37.7749, lng: -122.4194, currency: "USD", electricity: 0.25, petrol: 4.5, diesel: 5.0 },
+  { name: "Bengaluru, India", lat: 12.9716, lng: 77.5946, currency: "INR" },
+  { name: "Pune, India", lat: 18.5204, lng: 73.8567, currency: "INR" },
+  { name: "Delhi, India", lat: 28.7041, lng: 77.1025, currency: "INR" },
+  { name: "San Francisco, USA", lat: 37.7749, lng: -122.4194, currency: "USD" },
 ];
 
 // Charger costs are now auto-calculated using smart ratio
@@ -178,10 +179,29 @@ export default function NewComparisonSetup() {
     isLoading: currencyLoading,
     isFetching: currencyFetching,
   } = useLocationCurrencyQuery(mapCoords.latitude, mapCoords.longitude);
+  const {
+    data: energyPrices,
+    isLoading: energyPriceLoading,
+    isFetching: energyPriceFetching,
+    isError: energyPriceError,
+  } = useEnergyPriceQuery(mapCoords.latitude, mapCoords.longitude);
   const { data: fallbackCurrencies = [] } = useCurrencyByCodeQuery(currencyFallback);
   const resolvedCurrency = locationCurrencies[0] ?? fallbackCurrencies[0] ?? null;
   const activeCurrency = resolvedCurrency ?? USD_CURRENCY;
   const currency = resolvedCurrency?.id ?? currencyFallback;
+
+  useEffect(() => {
+    if (!energyPrices) {
+      return;
+    }
+
+    setLocation((currentLocation) => ({
+      ...currentLocation,
+      electricityPrice: clampNumber(energyPrices.price_per_kwh, 0, 10000),
+      fuelCostPetrol: clampNumber(energyPrices.petrol_price, 0, 10000),
+      fuelCostDiesel: clampNumber(energyPrices.diesel_price, 0, 10000),
+    }));
+  }, [energyPrices]);
 
   const resolvedEvVehicles = useMemo(() => {
     if (!resolvedCurrency) {
@@ -251,12 +271,6 @@ export default function NewComparisonSetup() {
     setMapCoords({ latitude: city.lat, longitude: city.lng });
     setLocationName(limitText(city.name, MAX_LOCATION_NAME_LENGTH));
     setCurrencyFallback(city.currency);
-    setLocation((currentLocation) => ({
-      ...currentLocation,
-      electricityPrice: city.electricity,
-      fuelCostPetrol: city.petrol,
-      fuelCostDiesel: city.diesel,
-    }));
   };
 
   // Reverse-geocode coordinates to get a human-readable location name
@@ -331,6 +345,16 @@ export default function NewComparisonSetup() {
 
       if (!resolvedCurrency && currencyFallback !== USD_CURRENCY.id) {
         setSubmitError("Unable to resolve the market currency for the selected location.");
+        return;
+      }
+
+      if ((energyPriceLoading || energyPriceFetching) && !energyPrices) {
+        setSubmitError("Energy prices are still loading for the selected location.");
+        return;
+      }
+
+      if (energyPriceError && !energyPrices) {
+        setSubmitError("Unable to load backend energy prices for the selected location.");
         return;
       }
 

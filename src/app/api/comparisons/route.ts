@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { backendFetch } from "@/lib/backend";
 import {
-  buildDashboardComparison,
   fetchDashboardComparisons,
   type ComparisonFormPayload,
 } from "@/lib/comparisons";
@@ -43,44 +42,26 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   const payload = (await request.json()) as ComparisonFormPayload;
 
-  const defaultProjectResponse = await backendFetch("/v1/project/default");
-  if (!defaultProjectResponse.ok) {
+  try {
+    const response = await backendFetch("/v1/comparison/calculate", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const bodyText = await response.text().catch(() => "");
+      return NextResponse.json(
+        { message: "Failed to calculate comparison.", details: bodyText || null },
+        { status: response.status }
+      );
+    }
+
+    const data = await response.json();
+    return NextResponse.json(data);
+  } catch {
     return NextResponse.json(
-      { message: "Failed to resolve the default project." },
-      { status: defaultProjectResponse.status }
+      { message: "Failed to calculate comparison." },
+      { status: 500 }
     );
   }
-
-  const defaultProject = (await defaultProjectResponse.json()) as { id: number };
-  const reportName = payload.comparisonName.trim() || "Untitled Comparison";
-
-  const createReportResponse = await backendFetch("/v1/report", {
-    method: "POST",
-    body: JSON.stringify({
-      name: reportName,
-      project: defaultProject.id,
-      type: "comparison",
-      s3: "",
-      json: {
-        input: payload,
-        output: null,
-      },
-    }),
-  });
-
-  if (!createReportResponse.ok) {
-    return NextResponse.json(
-      { message: "Failed to create the comparison report." },
-      { status: createReportResponse.status }
-    );
-  }
-
-  const report = await createReportResponse.json();
-  const detailResponse = await backendFetch(`/v1/report/${report.id}`);
-  if (!detailResponse.ok) {
-    return NextResponse.json({ report });
-  }
-
-  const details = await detailResponse.json();
-  return NextResponse.json({ report, comparison: buildDashboardComparison(details) });
 }

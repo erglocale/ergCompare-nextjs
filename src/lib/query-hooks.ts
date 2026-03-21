@@ -63,6 +63,31 @@ export function useCurrencyByCodeQuery(currencyCode?: string) {
   });
 }
 
+export interface EnergyPriceResult {
+  petrol_price: number;
+  diesel_price: number;
+  price_per_kwh: number;
+}
+
+export function useEnergyPriceQuery(latitude?: number, longitude?: number) {
+  return useQuery({
+    queryKey: ["energy-price", latitude ?? null, longitude ?? null],
+    queryFn: async () => {
+      const response = await fetch("/api/energy-price", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ latitude, longitude }),
+      });
+      if (!response.ok) {
+        throw new Error("Failed to fetch energy prices.");
+      }
+      return (await response.json()) as EnergyPriceResult;
+    },
+    enabled: typeof latitude === "number" && typeof longitude === "number",
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
 export function useEvCatalogQuery(
   search?: string,
   latitude?: number,
@@ -142,8 +167,9 @@ export function useCreateComparisonMutation() {
       }
 
       return (await response.json()) as {
-        report: { id: number };
-        comparison?: DashboardComparison;
+        report: { id: number; name?: string; type?: string };
+        output: unknown | null;
+        status: "completed" | "failed" | "pending";
       };
     },
     onSuccess: async () => {
