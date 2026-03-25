@@ -14,11 +14,31 @@
   align-items: center;
 }
 
+.headerTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .headerTitle {
   font-size: 14px;
   font-weight: 700;
   color: var(--heading);
 }
+
+.betaBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #8a5300;
+  background: #fff2df;
+  border: 1px solid #ffd8a8;
+}
+
 .headerSub {
   font-size: 11px;
   color: var(--text-muted);

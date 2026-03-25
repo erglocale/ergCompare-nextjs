@@ -43,6 +43,12 @@ export type AssumptionsResult = {
   energy_source: string;
   ice_source: string;
   legacy_algo: string;
+  public_charging_rate_used?: number;
+  public_rate_source_level?: string;
+  public_rate_charger_type?: string;
+  electricity_rate_used?: number;
+  public_rate_city_or_source_name?: string | null;
+  public_rate_distance_km_used?: number | null;
 };
 
 export type SummaryResult = {

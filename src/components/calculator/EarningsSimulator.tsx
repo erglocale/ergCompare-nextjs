@@ -44,9 +44,13 @@ export default function EarningsSimulator({
     <div className={styles.card}>
       <div className={styles.header}>
         <div>
-          <div className={styles.headerTitle}>Estimated Fleet Earnings</div>
+          <div className={styles.headerTitleRow}>
+            <div className={styles.headerTitle}>Estimated Fleet Earnings</div>
+            <span className={styles.betaBadge}>Beta</span>
+          </div>
           <div className={styles.headerSub}>
-            <strong>{currentUseCase.label}</strong> - {earningData.source}
+            <strong>{currentUseCase.label}</strong> - {earningData.source} for{" "}
+            {vehicleName}
           </div>
         </div>
         <div className={styles.poweredBadge}>
@@ -123,9 +127,10 @@ export default function EarningsSimulator({
         </div>
 
         <div className={styles.disclaimer}>
-          Earnings based on {earningData.source} benchmarks. Actual revenue depends on
-          contracts, routes, and utilization. ergOS provides fleet operations that
-          logistics partners require for onboarding.
+          Earnings based on {earningData.source} benchmarks. This section is still a
+          placeholder and is not included in the backend-owned TCO totals. Actual
+          revenue depends on contracts, routes, and utilization. ergOS provides fleet
+          operations that logistics partners require for onboarding.
         </div>
       </div>
     </div>

@@ -125,20 +125,21 @@ export default async function CompareDetailPage({
         year: "numeric",
       })
     : "Unknown date";
-  const currencyCode = input.currency || "USD";
-
-  const fleetSize = input.evVehicles.reduce((total, vehicle) => total + vehicle.count, 0);
-  const annualKm = input.annualDrive;
-  const contractYears = input.contractYears;
-  const evDisplayName = input.evVehicles[0]?.name ?? "EV";
-  const locationName = input.locationName;
-  const vehicleProfile = getVehicleUseCaseProfile(evDisplayName);
-  const activeUseCase = vehicleProfile.defaultUseCase;
-
   // Primary path: canonical backend output.
   const canonicalOutput = backendDetails
     ? getCanonicalComparisonOutput(backendDetails)
     : null;
+
+  const currencyCode = canonicalOutput?.summary.currency || input.currency || "USD";
+  const fleetSize =
+    canonicalOutput?.summary.fleet_size ??
+    input.evVehicles.reduce((total, vehicle) => total + vehicle.count, 0);
+  const annualKm = canonicalOutput?.summary.annual_drive_km ?? input.annualDrive;
+  const contractYears = canonicalOutput?.summary.contract_years ?? input.contractYears;
+  const evDisplayName = input.evVehicles[0]?.name ?? "EV";
+  const locationName = input.locationName;
+  const vehicleProfile = getVehicleUseCaseProfile(evDisplayName);
+  const activeUseCase = vehicleProfile.defaultUseCase;
 
   // Fallback for legacy reports that still have raw algo output shape.
   const legacyParsedOutput: ComparisonOutput | null =
@@ -443,7 +444,7 @@ export default async function CompareDetailPage({
             >
               {formatCurrencyValue(annualFleetSavingsVsPublic, currencyCode)}
             </div>
-            <div className={resultStyles.savingsMeta}>optimized vs self-managed</div>
+            <div className={resultStyles.savingsMeta}>optimized vs public charging</div>
           </article>
         </section>
 
@@ -522,7 +523,9 @@ export default async function CompareDetailPage({
               </table>
             </div>
             <div className={resultStyles.tableFooter}>
-              EV (as-is) assumes self-managed charging. EV (optimized) uses fleet management defaults. Platform pricing discussed during consultation.
+              EV (as-is) uses public charging only and excludes charger capex. EV
+              (optimized) uses the regional electricity rate and includes charger
+              infrastructure.
             </div>
           </section>
         )}
