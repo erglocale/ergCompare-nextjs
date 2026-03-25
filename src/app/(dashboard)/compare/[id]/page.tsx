@@ -652,9 +652,7 @@ export default async function CompareDetailPage({
         </div>
 
         <footer className={resultStyles.reportFooter}>
-          <span className={resultStyles.footerBrand}>
-            erg<span className={resultStyles.footerAccent}>Locale</span>
-          </span>
+          <img src="/brand/ergCompare.png" alt="ergCompare" className={resultStyles.footerLogo} />
           <div className={resultStyles.footerSub}>
             Intelligence for EV Fleets and Energy | hello@ergLocale.com
           </div>

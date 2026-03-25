@@ -62,16 +62,7 @@ export default function Sidebar({ user }: { user: SidebarUser }) {
   return (
     <aside className={styles.sidebar}>
       <div className={styles.logo}>
-        <div className={styles.logoIcon}>
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="12" r="10" stroke="var(--primary)" strokeWidth="2" />
-            <path d="M8 12l3 3 5-6" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </div>
-        <div className={styles.logoText}>
-          <span className={styles.logoBrand}>erg</span>
-          <span className={styles.logoHighlight}>Compare</span>
-        </div>
+        <img src="/brand/ergCompare.png" alt="ergCompare" className={styles.logoImage} />
       </div>
 
       <nav className={styles.nav}>

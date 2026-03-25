@@ -378,6 +378,13 @@
   border-top: 1px solid var(--border);
 }
 
+.footerLogo {
+  display: block;
+  height: 30px;
+  width: auto;
+  margin: 0 auto;
+}
+
 .footerBrand {
   font-size: 14px;
   font-weight: 800;

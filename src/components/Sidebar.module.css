@@ -15,34 +15,14 @@
 .logo {
   display: flex;
   align-items: center;
-  gap: 12px;
   padding: 24px 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.logoIcon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-md);
-  background: rgba(249, 116, 23, 0.1);
-  flex-shrink: 0;
-}
-
-.logoText {
-  font-size: 20px;
-  font-weight: 700;
-  color: #fff;
-}
-
-.logoBrand {
-  color: #fff;
-}
-
-.logoHighlight {
-  color: var(--primary);
+.logoImage {
+  display: block;
+  width: 168px;
+  height: auto;
 }
 
 /* Navigation */
