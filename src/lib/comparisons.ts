@@ -28,6 +28,9 @@ export type ComparisonFormPayload = {
     chargeCyclesPerDay: number;
     maintenanceCost: number;
     resalePercent: number;
+    effectivePowerAc?: number;
+    effectivePowerDc?: number;
+    operatingTime?: [string, string];
   }>;
   iceConfig: {
     name: string;

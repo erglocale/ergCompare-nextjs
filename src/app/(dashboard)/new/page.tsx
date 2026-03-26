@@ -51,7 +51,7 @@ function parseClampedNumber(value: string, min: number, max: number) {
 }
 
 interface VehicleConfig {
-  [key: string]: string | number | undefined;
+  [key: string]: string | number | [string, string] | undefined;
   modelId?: number | string;
   segment?: string;
   catalogPriceUsd?: number;
@@ -64,6 +64,9 @@ interface VehicleConfig {
   chargeCyclesPerDay: number;
   maintenanceCost: number;
   resalePercent: number;
+  effectivePowerAc?: number;
+  effectivePowerDc?: number;
+  operatingTime?: [string, string];
 }
 
 interface IceConfig {
@@ -90,6 +93,14 @@ const PRESET_CITIES = [
   { name: "San Francisco, USA", lat: 37.7749, lng: -122.4194, currency: "USD" },
 ];
 
+function defaultOperatingTime(): [string, string] {
+  const start = new Date();
+  start.setHours(7, 0, 0, 0);
+  const end = new Date();
+  end.setHours(23, 0, 0, 0);
+  return [start.toISOString(), end.toISOString()];
+}
+
 // Charger costs are now auto-calculated using smart ratio
 
 function evFromCatalogItem(
@@ -110,6 +121,9 @@ function evFromCatalogItem(
     chargeCyclesPerDay: 1,
     maintenanceCost: 0,
     resalePercent: 10,
+    effectivePowerAc: item.effective_power_ac,
+    effectivePowerDc: item.effective_power_dc,
+    operatingTime: defaultOperatingTime(),
   };
 }
 
@@ -125,6 +139,9 @@ const EMPTY_EV: VehicleConfig = {
   chargeCyclesPerDay: 1,
   maintenanceCost: 0,
   resalePercent: 10,
+  effectivePowerAc: undefined,
+  effectivePowerDc: undefined,
+  operatingTime: defaultOperatingTime(),
 };
 
 const defaultIce: IceConfig = {
@@ -369,6 +386,18 @@ export default function NewComparisonSetup() {
         chargeCyclesPerDay: clampNumber(ev.chargeCyclesPerDay, 1, 3),
         maintenanceCost: clampNumber(ev.maintenanceCost, 0, MAX_PRICE),
         resalePercent: clampNumber(ev.resalePercent, 0, MAX_PERCENT),
+        effectivePowerAc:
+          typeof ev.effectivePowerAc === "number"
+            ? clampNumber(ev.effectivePowerAc, 0, MAX_BATTERY_CAPACITY)
+            : undefined,
+        effectivePowerDc:
+          typeof ev.effectivePowerDc === "number"
+            ? clampNumber(ev.effectivePowerDc, 0, MAX_BATTERY_CAPACITY)
+            : undefined,
+        operatingTime:
+          Array.isArray(ev.operatingTime) && ev.operatingTime.length === 2
+            ? [String(ev.operatingTime[0]), String(ev.operatingTime[1])] as [string, string]
+            : defaultOperatingTime(),
       }));
 
       const marketIce = matchedIceParameters && matchedIceParameters.length > 0 ? matchedIceParameters[0] : null;
